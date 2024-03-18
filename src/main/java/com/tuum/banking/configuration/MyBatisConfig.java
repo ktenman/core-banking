@@ -31,5 +31,5 @@ public class MyBatisConfig {
 			this.setFieldValByName("updatedAt", Instant.now(), metaObject);
 		}
 	}
-
+	
 }

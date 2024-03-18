@@ -1,12 +1,11 @@
 package com.tuum.banking.util;
 
-import java.nio.file.Files;
-
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.util.ResourceUtils;
 
 import java.io.IOException;
+import java.nio.file.Files;
 
 @NoArgsConstructor(access = lombok.AccessLevel.PRIVATE)
 public class TestFileUtil {

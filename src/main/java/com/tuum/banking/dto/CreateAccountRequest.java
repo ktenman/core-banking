@@ -1,4 +1,4 @@
-package com.tuum.banking.model;
+package com.tuum.banking.dto;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;

@@ -14,7 +14,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class AccountModel {
+public class AccountDto {
 	private Long accountId;
 	private Long customerId;
 	private List<BalanceResponseDto> balances;

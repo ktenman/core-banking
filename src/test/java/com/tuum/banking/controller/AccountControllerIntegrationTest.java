@@ -13,10 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.util.ResourceUtils;
 
 import java.math.BigDecimal;
-import java.nio.file.Files;
 import java.util.List;
 
 import static com.tuum.banking.dto.CreateAccountRequest.BalanceCurrency.EUR;
