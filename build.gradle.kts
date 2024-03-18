@@ -3,6 +3,7 @@ plugins {
     id("org.springframework.boot") version "3.2.3"
     id("io.spring.dependency-management") version "1.1.4"
     id("jacoco")
+    id("org.sonarqube") version "4.4.1.3373"
 }
 
 group = "com.tuum"
@@ -78,5 +79,14 @@ tasks.withType<JacocoReport> {
         xml.required = true
         html.required = true
         csv.required = false
+    }
+}
+
+sonar {
+    properties {
+        property("sonar.projectKey", "core-banking")
+        property("sonar.organization", "ktenman")
+        property("sonar.host.url", "https://sonarcloud.io")
+        property("sonar.coverage.exclusions", "src/test/**")
     }
 }
