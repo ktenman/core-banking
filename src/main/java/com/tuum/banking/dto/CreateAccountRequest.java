@@ -46,7 +46,7 @@ public class CreateAccountRequest {
 		@NotNull
 		private BigDecimal availableAmount;
 		
-		private void setCurrency(String currency) {
+		public void setCurrency(String currency) {
 			validateCurrency(currency);
 			this.currency = currency;
 		}
