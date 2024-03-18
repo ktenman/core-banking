@@ -2,6 +2,7 @@ plugins {
     java
     id("org.springframework.boot") version "3.2.3"
     id("io.spring.dependency-management") version "1.1.4"
+    id("jacoco")
 }
 
 group = "com.tuum"
@@ -63,4 +64,19 @@ dependencyManagement {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    finalizedBy(":jacocoTestReport")
+}
+
+val skipJacoco: Boolean = false
+val jacocoEnabled: Boolean = true
+tasks.withType<JacocoReport> {
+    isEnabled = jacocoEnabled
+    if (skipJacoco) {
+        enabled = false
+    }
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
 }
