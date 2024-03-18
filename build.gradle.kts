@@ -34,6 +34,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-data-redis-reactive")
     implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-aop")
     implementation("org.flywaydb:flyway-core")
     implementation("org.mybatis.spring.boot:mybatis-spring-boot-starter:$mybatisVersion")
     implementation("com.baomidou:mybatis-plus-spring-boot3-starter:$mybatisPlusVersion")
