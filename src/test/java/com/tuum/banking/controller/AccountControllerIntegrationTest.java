@@ -23,7 +23,6 @@ import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
@@ -37,6 +36,7 @@ import java.util.stream.Stream;
 import static com.tuum.banking.dto.CreateAccountRequest.BalanceCurrency.EUR;
 import static com.tuum.banking.dto.CreateAccountRequest.BalanceCurrency.USD;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -81,16 +81,13 @@ class AccountControllerIntegrationTest {
 	private void assertAccountCreatedWithBalances(AccountDto accountDto, List<BalanceRequestDto> balanceRequests) {
 		assertThat(accountDto.getAccountId()).isEqualTo(1L);
 		assertThat(accountDto.getCustomerId()).isEqualTo(1L);
-		assertThat(accountDto.getBalances())
-				.hasSize(balanceRequests.size())
+		assertThat(accountDto.getBalances()).hasSize(balanceRequests.size())
 				.satisfiesExactlyInAnyOrder(assertBalanceResponsesForRequests(balanceRequests));
 	}
 	
 	@SuppressWarnings("unchecked")
 	private Consumer<? super BalanceResponseDto>[] assertBalanceResponsesForRequests(List<BalanceRequestDto> balanceRequests) {
-		return balanceRequests.stream()
-				.map(this::assertBalanceResponseForRequest)
-				.toArray(Consumer[]::new);
+		return balanceRequests.stream().map(this::assertBalanceResponseForRequest).toArray(Consumer[]::new);
 	}
 	
 	private Consumer<BalanceResponseDto> assertBalanceResponseForRequest(BalanceRequestDto balanceRequest) {
@@ -106,15 +103,16 @@ class AccountControllerIntegrationTest {
 		assertThat(message).isNotNull();
 		assertThat(message.getMessageProperties()).isNotNull();
 		Map<String, Object> headers = message.getMessageProperties().getHeaders();
-		assertThat(headers)
-				.hasSize(3)
-				.containsEntry("originator", ORIGINATOR)
-				.containsKey("createdAt")
-				.containsKey("uuid");
+		assertThat(headers).hasSize(3).containsEntry("originator", ORIGINATOR).containsKey("createdAt").containsKey("uuid");
 		assertThat(headers.get("createdAt")).isNotNull();
 		assertThat(headers.get("uuid")).isNotNull();
 		AccountDto receivedAccountDto = objectMapper.readValue(message.getBody(), AccountDto.class);
 		assertThat(receivedAccountDto).isEqualTo(response);
+	}
+	
+	@SneakyThrows(IOException.class)
+	private ApiError apiError(ResultActions resultActions) {
+		return objectMapper.readValue(resultActions.andReturn().getResponse().getContentAsString(), ApiError.class);
 	}
 	
 	@Nested
@@ -138,9 +136,8 @@ class AccountControllerIntegrationTest {
 					.build();
 			
 			ResultActions resultActions = mockMvc.perform(post(ACCOUNT_API_ENDPOINT)
-							.contentType(MediaType.APPLICATION_JSON)
-							.content(objectMapper.writeValueAsString(accountRequestDto)))
-					.andExpect(status().isOk());
+					.contentType(APPLICATION_JSON)
+					.content(objectMapper.writeValueAsString(accountRequestDto))).andExpect(status().isOk());
 			
 			AccountDto response = objectMapper.readValue(resultActions.andReturn().getResponse().getContentAsString(), AccountDto.class);
 			assertAccountCreatedWithBalances(response, balanceRequests);
@@ -152,14 +149,27 @@ class AccountControllerIntegrationTest {
 			String invalidAccountRequestJson = TestFileUtil.readFileAsString("invalid_currency_account_request.json");
 			
 			ResultActions resultActions = mockMvc.perform(post(ACCOUNT_API_ENDPOINT)
-							.contentType(MediaType.APPLICATION_JSON)
-							.content(invalidAccountRequestJson))
-					.andExpect(status().isBadRequest());
+					.contentType(APPLICATION_JSON).content(invalidAccountRequestJson)).andExpect(status().isBadRequest());
 			
-			ApiError apiError = objectMapper.readValue(resultActions.andReturn().getResponse().getContentAsString(), ApiError.class);
+			ApiError apiError = apiError(resultActions);
 			assertThat(apiError.getMessage()).isEqualTo("Invalid request payload");
 			assertThat(apiError.getDebugMessage()).contains("JSON parse error", "not one of the values accepted for Enum class: [EUR, GBP, USD]");
 			assertThat(apiError.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
+		}
+		
+		@Test
+		void createAccount_withInvalidAccountData_returnsMultipleValidationErrors() throws Exception {
+			ResultActions resultActions = mockMvc.perform(post(ACCOUNT_API_ENDPOINT)
+					.contentType(APPLICATION_JSON).content("{}")).andExpect(status().isBadRequest());
+			
+			ApiError apiError = apiError(resultActions);
+			assertThat(apiError.getMessage()).isEqualTo("Validation error");
+			assertThat(apiError.getDebugMessage()).isEqualTo("One or more fields have an error");
+			assertThat(apiError.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
+			assertThat(apiError.getValidationErrors()).hasSize(3)
+					.containsEntry("balances", "At least one balance is required")
+					.containsEntry("customerId", "Customer ID is required")
+					.containsEntry("country", "Country is required");
 		}
 	}
 	
@@ -177,12 +187,15 @@ class AccountControllerIntegrationTest {
 			AccountDto response = objectMapper.readValue(resultActions.andReturn().getResponse().getContentAsString(), AccountDto.class);
 			assertThat(response.getAccountId()).isEqualTo(1L);
 			assertThat(response.getCustomerId()).isEqualTo(1L);
-			assertAccountCreatedWithBalances(response, List.of(new BalanceRequestDto(USD, BigDecimal.valueOf(100)), new BalanceRequestDto(EUR, BigDecimal.valueOf(200))));
+			assertAccountCreatedWithBalances(response, List.of(
+					new BalanceRequestDto(USD, BigDecimal.valueOf(100)),
+					new BalanceRequestDto(EUR, BigDecimal.valueOf(200)))
+			);
 		}
 		
 		@Test
 		void getAccount_withNonExistingAccountId_returnsNotFoundWithErrorMessage() throws Exception {
-			ResultActions resultActions = mockMvc.perform(get(ACCOUNT_API_ENDPOINT + "/{accountId}", 999L).queryParam("customerId", "1"))
+			ResultActions resultActions = mockMvc.perform(get(ACCOUNT_API_ENDPOINT + "/{accountId}", 999L))
 					.andExpect(status().isNotFound());
 			
 			ApiError apiError = objectMapper.readValue(resultActions.andReturn().getResponse().getContentAsString(), ApiError.class);

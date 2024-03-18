@@ -48,17 +48,6 @@ public class GlobalExceptionHandler {
 		return new ResponseEntity<>(apiError, apiError.getStatus());
 	}
 	
-	@ExceptionHandler(AccessDeniedException.class)
-	public ResponseEntity<ApiError> handleAccessDeniedException(AccessDeniedException exception) {
-		ApiError apiError = ApiError.builder()
-				.status(HttpStatus.FORBIDDEN)
-				.message(exception.getLocalizedMessage())
-				.debugMessage("Access to the requested resource is denied")
-				.build();
-		
-		return new ResponseEntity<>(apiError, apiError.getStatus());
-	}
-	
 	@ExceptionHandler(AccountNotFoundException.class)
 	public ResponseEntity<ApiError> handleAccountNotFoundException(AccountNotFoundException exception) {
 		ApiError apiError = ApiError.builder()

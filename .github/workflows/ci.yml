@@ -21,6 +21,11 @@ jobs:
         uses: eskatos/gradle-command-action@v3.1.0
         with:
           arguments: test --info
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4.0.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: ktenman/core-banking
       - uses: actions/upload-artifact@v4.3.1
         if: always()
         with:

@@ -19,22 +19,23 @@ import java.util.List;
 @AllArgsConstructor
 public class CreateAccountRequest {
 	
-	@NotNull
+	@NotNull(message = "Customer ID is required")
 	private Long customerId;
 	
-	@Length(min = 3, max = 3)
+	@Length(min = 3, max = 3, message = "Country must be 3 characters long")
+	@NotEmpty(message = "Country is required")
 	private String country;
 	
-	@NotEmpty
+	@NotEmpty(message = "At least one balance is required")
 	@Valid
 	private List<BalanceRequestDto> balances;
 	
 	@Getter
-	@Builder
 	@NoArgsConstructor
 	@AllArgsConstructor
 	@ToString
 	public static class BalanceRequestDto {
+		
 		@NotNull
 		private BalanceCurrency currency;
 		
