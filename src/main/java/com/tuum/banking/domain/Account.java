@@ -11,4 +11,5 @@ public class Account extends BaseEntity {
 	private Long customerId;
 	private String countryCode;
 	private List<Balance> balances;
+	private String reference;
 }

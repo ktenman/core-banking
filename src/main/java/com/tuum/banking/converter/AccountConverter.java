@@ -12,13 +12,15 @@ public class AccountConverter {
 		Account account = new Account();
 		account.setCustomerId(createAccountRequest.getCustomerId());
 		account.setCountryCode(createAccountRequest.getCountry());
+		account.setReference(createAccountRequest.getReference());
 		return account;
 	}
 	
-	public static AccountDto toModel(Account account) {
+	public static AccountDto toDto(Account account) {
 		AccountDto accountDto = new AccountDto();
 		accountDto.setAccountId(account.getId());
 		accountDto.setCustomerId(account.getCustomerId());
+		accountDto.setReference(account.getReference());
 		return accountDto;
 	}
 }

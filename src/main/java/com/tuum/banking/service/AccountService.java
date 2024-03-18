@@ -8,6 +8,7 @@ import com.tuum.banking.domain.Balance;
 import com.tuum.banking.dto.AccountDto;
 import com.tuum.banking.dto.CreateAccountRequest;
 import com.tuum.banking.mapper.AccountMapper;
+import com.tuum.banking.service.lock.Lock;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,11 +23,12 @@ public class AccountService {
 	private final RabbitMQPublisher rabbitMQPublisher;
 	
 	@Transactional
+	@Lock(key = "#createAccountRequest.reference")
 	public AccountDto createAccount(CreateAccountRequest createAccountRequest) {
 		Account account = AccountConverter.toEntity(createAccountRequest);
 		accountMapper.insert(account);
 		List<Balance> balances = balanceService.createBalances(account.getId(), createAccountRequest.getBalances());
-		AccountDto accountDto = AccountConverter.toModel(account);
+		AccountDto accountDto = AccountConverter.toDto(account);
 		accountDto.setBalances(balances.stream().map(BalanceConverter::toResponseDto).toList());
 		rabbitMQPublisher.publishAccountCreated(accountDto);
 		return accountDto;
@@ -36,7 +38,7 @@ public class AccountService {
 		Account account = accountMapper.getAccountWithBalances(accountId).orElseThrow(
 				() -> new AccountNotFoundException(String.format("Account with ID %s does not exist", accountId))
 		);
-		AccountDto accountDto = AccountConverter.toModel(account);
+		AccountDto accountDto = AccountConverter.toDto(account);
 		accountDto.setBalances(account.getBalances().stream().map(BalanceConverter::toResponseDto).toList());
 		return accountDto;
 	}

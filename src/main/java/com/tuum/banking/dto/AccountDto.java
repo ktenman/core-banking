@@ -16,6 +16,7 @@ public class AccountDto {
 	private Long accountId;
 	private Long customerId;
 	private List<BalanceResponseDto> balances;
+	private String reference;
 	
 	@Getter
 	@Setter

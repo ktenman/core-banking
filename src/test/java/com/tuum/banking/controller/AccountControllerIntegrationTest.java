@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -61,6 +62,7 @@ class AccountControllerIntegrationTest {
 		Account account = new Account();
 		account.setCustomerId(1L);
 		account.setCountryCode("USA");
+		account.setReference(UUID.randomUUID().toString());
 		accountMapper.insert(account);
 		
 		Balance balance1 = new Balance();
@@ -131,6 +133,7 @@ class AccountControllerIntegrationTest {
 		void createAccount_withValidRequest_returnsCreatedAccountWithBalances(List<BalanceRequestDto> balanceRequests) throws Exception {
 			var accountRequestDto = CreateAccountRequest.builder()
 					.customerId(1L)
+					.reference(UUID.randomUUID().toString())
 					.country("USA")
 					.balances(balanceRequests)
 					.build();
@@ -166,10 +169,11 @@ class AccountControllerIntegrationTest {
 			assertThat(apiError.getMessage()).isEqualTo("Validation error");
 			assertThat(apiError.getDebugMessage()).isEqualTo("One or more fields have an error");
 			assertThat(apiError.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
-			assertThat(apiError.getValidationErrors()).hasSize(3)
+			assertThat(apiError.getValidationErrors()).hasSize(4)
 					.containsEntry("balances", "At least one balance is required")
 					.containsEntry("customerId", "Customer ID is required")
-					.containsEntry("country", "Country is required");
+					.containsEntry("country", "Country is required")
+					.containsEntry("reference", "Reference is required");
 		}
 	}
 	

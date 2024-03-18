@@ -22,6 +22,9 @@ public class CreateAccountRequest {
 	@NotNull(message = "Customer ID is required")
 	private Long customerId;
 	
+	@NotEmpty(message = "Reference is required")
+	private String reference;
+	
 	@Length(min = 3, max = 3, message = "Country must be 3 characters long")
 	@NotEmpty(message = "Country is required")
 	private String country;
