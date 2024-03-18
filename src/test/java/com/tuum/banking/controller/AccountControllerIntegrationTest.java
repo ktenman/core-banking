@@ -18,7 +18,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -122,10 +121,10 @@ class AccountControllerIntegrationTest {
 	@DisplayName("POST /api/accounts")
 	class CreateAccount {
 		
-		private static Stream<Arguments> provideBalanceRequestData() {
+		private static Stream<List<BalanceRequestDto>> provideBalanceRequestData() {
 			return Stream.of(
-					Arguments.of(List.of(new BalanceRequestDto(USD, BigDecimal.valueOf(100)), new BalanceRequestDto(EUR, BigDecimal.valueOf(200)))),
-					Arguments.of(List.of(new BalanceRequestDto(EUR, BigDecimal.valueOf(300))))
+					List.of(new BalanceRequestDto(USD, BigDecimal.valueOf(100)), new BalanceRequestDto(EUR, BigDecimal.valueOf(200))),
+					List.of(new BalanceRequestDto(EUR, BigDecimal.valueOf(300)))
 			);
 		}
 		
