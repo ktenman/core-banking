@@ -4,12 +4,16 @@ import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.stereotype.Component;
+
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 
 @Aspect
 @Component
@@ -20,18 +24,19 @@ public class LockAspect {
 	
 	@Around("@annotation(lock)")
 	public Object aroundLockedMethod(ProceedingJoinPoint joinPoint, Lock lock) throws Throwable {
+		if (lock.key().isBlank()) {
+			throw new IllegalArgumentException("Lock key cannot be empty");
+		}
 		String keyExpression = lock.key();
-		String lockKey = extractLockKey(keyExpression, joinPoint.getArgs());
+		String lockKey = keyExpression.contains(".") ?
+				getKeyFromNestedProperty(keyExpression, joinPoint.getArgs()) :
+				getKeyFromDirectVariable(keyExpression, joinPoint);
 		lockService.acquireLock(lockKey);
 		try {
 			return joinPoint.proceed();
 		} finally {
 			lockService.releaseLock(lockKey);
 		}
-	}
-	
-	private String extractLockKey(String keyExpression, Object[] args) {
-		return keyExpression.contains(".") ? getKeyFromNestedProperty(keyExpression, args) : getKeyFromDirectVariable(keyExpression, args);
 	}
 	
 	private String getKeyFromNestedProperty(String keyExpression, Object[] args) {
@@ -56,12 +61,25 @@ public class LockAspect {
 		return argName.substring(0, 1).toLowerCase() + argName.substring(1);
 	}
 	
-	private String getKeyFromDirectVariable(String keyExpression, Object[] args) {
-		for (Object arg : args) {
-			if (arg != null && getVariableName(arg).equalsIgnoreCase(keyExpression)) {
-				return arg.toString();
+	private String getKeyFromDirectVariable(String keyExpression, ProceedingJoinPoint joinPoint) {
+		if (keyExpression.startsWith("#")) {
+			keyExpression = keyExpression.substring(1);
+		}
+		MethodSignature signature = (MethodSignature) joinPoint.getSignature();
+		if (signature == null) {
+			throw new IllegalArgumentException("No argument found with name: " + keyExpression + " in method signature");
+		}
+		Method method = signature.getMethod();
+		Parameter[] parameters = method.getParameters();
+		Object[] args = joinPoint.getArgs();
+		for (int i = 0; i < parameters.length; i++) {
+			Parameter parameter = parameters[i];
+			String parameterName = parameter.getName();
+			if (parameterName.equalsIgnoreCase(keyExpression)) {
+				return args[i].toString();
 			}
 		}
 		throw new IllegalArgumentException("No argument found with name: " + keyExpression);
 	}
+	
 }
