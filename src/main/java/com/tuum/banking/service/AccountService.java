@@ -19,6 +19,7 @@ import java.util.List;
 public class AccountService {
 	private final AccountMapper accountMapper;
 	private final BalanceService balanceService;
+	private final RabbitMQPublisher rabbitMQPublisher;
 	
 	@Transactional
 	public AccountDto createAccount(CreateAccountRequest createAccountRequest) {
@@ -27,6 +28,7 @@ public class AccountService {
 		List<Balance> balances = balanceService.createBalances(account.getId(), createAccountRequest.getBalances());
 		AccountDto accountDto = AccountConverter.toModel(account);
 		accountDto.setBalances(balances.stream().map(BalanceConverter::toResponseDto).toList());
+		rabbitMQPublisher.publishAccountCreated(accountDto);
 		return accountDto;
 	}
 	

@@ -3,11 +3,14 @@ package com.tuum.banking.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tuum.banking.IntegrationTest;
 import com.tuum.banking.configuration.exception.GlobalExceptionHandler.ApiError;
+import com.tuum.banking.configuration.rabbitmq.RabbitMQConstants;
 import com.tuum.banking.dto.AccountDto;
 import com.tuum.banking.dto.CreateAccountRequest;
 import com.tuum.banking.dto.CreateAccountRequest.BalanceRequestDto;
 import com.tuum.banking.util.TestFileUtil;
 import org.junit.jupiter.api.Test;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -16,6 +19,7 @@ import org.springframework.test.web.servlet.ResultActions;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 import static com.tuum.banking.dto.CreateAccountRequest.BalanceCurrency.EUR;
 import static com.tuum.banking.dto.CreateAccountRequest.BalanceCurrency.USD;
@@ -33,9 +37,11 @@ class AccountControllerIntegrationTest {
 	@Autowired
 	private ObjectMapper objectMapper;
 	
+	@Autowired
+	private RabbitTemplate rabbitTemplate;
+	
 	@Test
 	void createAccount_withValidRequest_returnsCreatedAccountWithBalances() throws Exception {
-		
 		var accountRequestDto = CreateAccountRequest.builder()
 				.customerId(1L)
 				.country("USA")
@@ -53,7 +59,6 @@ class AccountControllerIntegrationTest {
 				.getContentAsString();
 		
 		AccountDto response = objectMapper.readValue(contentAsString, AccountDto.class);
-		
 		assertThat(response.getAccountId()).isEqualTo(1L);
 		assertThat(response.getCustomerId()).isEqualTo(1L);
 		assertThat(response.getBalances()).hasSize(2)
@@ -69,6 +74,19 @@ class AccountControllerIntegrationTest {
 							assertThat(balanceResponseDto.getAvailableAmount()).isEqualTo(BigDecimal.valueOf(200));
 						}
 				);
+		Message message = rabbitTemplate.receive(RabbitMQConstants.ACCOUNT_CREATED);
+		assertThat(message).isNotNull();
+		assertThat(message.getMessageProperties()).isNotNull();
+		Map<String, Object> headers = message.getMessageProperties().getHeaders();
+		assertThat(headers)
+				.hasSize(3)
+				.containsEntry("originator", "core-banking")
+				.containsKey("createdAt")
+				.containsKey("uuid");
+		assertThat(headers.get("createdAt")).isNotNull();
+		assertThat(headers.get("uuid")).isNotNull();
+		AccountDto receivedAccountDto = objectMapper.readValue(message.getBody(), AccountDto.class);
+		assertThat(receivedAccountDto).isEqualTo(response);
 	}
 	
 	@Test

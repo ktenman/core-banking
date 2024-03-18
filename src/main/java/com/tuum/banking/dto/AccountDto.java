@@ -2,6 +2,7 @@ package com.tuum.banking.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -14,6 +15,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode
 public class AccountDto {
 	private Long accountId;
 	private Long customerId;
@@ -23,6 +25,7 @@ public class AccountDto {
 	@Setter
 	@Builder
 	@NoArgsConstructor
+	@EqualsAndHashCode
 	public static class BalanceResponseDto {
 		private Long balanceId;
 		private String currency;

@@ -1,4 +1,6 @@
 spring:
+  application:
+    name: core-banking
   jpa:
     show-sql: true
     properties:

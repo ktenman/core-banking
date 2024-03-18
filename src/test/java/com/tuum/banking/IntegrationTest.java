@@ -5,6 +5,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.testcontainers.containers.GenericContainer;
@@ -16,11 +17,14 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import static com.tuum.banking.configuration.ConfigurationConstants.TEST_PROFILE;
+
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @SpringBootTest
 @AutoConfigureMockMvc
 @ContextConfiguration(initializers = IntegrationTest.Initializer.class)
+@ActiveProfiles(TEST_PROFILE)
 @Sql(scripts = "/cleanup_database_before_test.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 public @interface IntegrationTest {
 	class Initializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
