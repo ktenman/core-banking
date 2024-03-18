@@ -2,6 +2,7 @@ package com.tuum.banking.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tuum.banking.configuration.exception.JsonConversionException;
 import com.tuum.banking.configuration.rabbitmq.RabbitMQConstants;
 import com.tuum.banking.dto.AccountDto;
 import lombok.RequiredArgsConstructor;
@@ -36,12 +37,12 @@ public class RabbitMQPublisher {
 	
 	private void publish(String queue, Object object) {
 		log.debug("Publishing message to queue [queue: {}]", queue);
-		String messageBody = null;
+		String messageBody;
 		try {
 			messageBody = objectMapper.writeValueAsString(object);
 		} catch (JsonProcessingException e) {
 			log.error("Error while converting object to JSON", e);
-			throw new RuntimeException(e);
+			throw new JsonConversionException("Failed to convert object to JSON", e);
 		}
 		String uuid = Optional.ofNullable(MDC.get("transactionId"))
 				.map(id -> id.replace("[", "").replace("]", "").trim())
