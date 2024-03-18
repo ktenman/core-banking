@@ -20,6 +20,7 @@ import java.util.List;
 import static com.tuum.banking.dto.CreateAccountRequest.BalanceCurrency.EUR;
 import static com.tuum.banking.dto.CreateAccountRequest.BalanceCurrency.USD;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -86,4 +87,16 @@ class AccountControllerIntegrationTest {
 				"not one of the values accepted for Enum class: [EUR, GBP, USD]");
 		assertThat(apiError.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
 	}
+	
+	@Test
+	void getAccount_withNonExistingAccountId_returnsNotFoundWithErrorMessage() throws Exception {
+		ResultActions resultActions = mockMvc.perform(get("/api/accounts/{accountId}", 999L))
+				.andExpect(status().isNotFound());
+		
+		ApiError apiError = objectMapper.readValue(resultActions.andReturn().getResponse().getContentAsString(), ApiError.class);
+		assertThat(apiError.getMessage()).isEqualTo("Account not found");
+		assertThat(apiError.getDebugMessage()).isEqualTo("Account with ID 999 does not exist");
+		assertThat(apiError.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+	}
+	
 }
