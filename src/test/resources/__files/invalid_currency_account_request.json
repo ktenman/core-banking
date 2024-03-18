@@ -1,0 +1,14 @@
+{
+  "customerId": 1,
+  "country": "USA",
+  "balances": [
+    {
+      "currency": "USD",
+      "availableAmount": 100
+    },
+    {
+      "currency": "INV",
+      "availableAmount": 200
+    }
+  ]
+}
