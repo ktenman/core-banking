@@ -1,5 +1,6 @@
 package com.tuum.banking.dto;
 
+import com.tuum.banking.configuration.exception.InvalidCurrencyException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -40,10 +41,23 @@ public class CreateAccountRequest {
 	public static class BalanceRequestDto {
 		
 		@NotNull
-		private BalanceCurrency currency;
+		private String currency;
 		
 		@NotNull
 		private BigDecimal availableAmount;
+		
+		private void setCurrency(String currency) {
+			validateCurrency(currency);
+			this.currency = currency;
+		}
+		
+		private void validateCurrency(String currency) {
+			try {
+				BalanceCurrency.valueOf(currency);
+			} catch (IllegalArgumentException e) {
+				throw new InvalidCurrencyException("Invalid currency: " + currency);
+			}
+		}
 	}
 	
 	public enum BalanceCurrency {

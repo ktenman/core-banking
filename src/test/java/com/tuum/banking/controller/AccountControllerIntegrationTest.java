@@ -12,7 +12,6 @@ import com.tuum.banking.dto.CreateAccountRequest;
 import com.tuum.banking.dto.CreateAccountRequest.BalanceRequestDto;
 import com.tuum.banking.mapper.AccountMapper;
 import com.tuum.banking.mapper.BalanceMapper;
-import com.tuum.banking.util.TestFileUtil;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -94,7 +93,7 @@ class AccountControllerIntegrationTest {
 	
 	private Consumer<BalanceResponseDto> assertBalanceResponseForRequest(BalanceRequestDto balanceRequest) {
 		return balanceResponseDto -> {
-			assertThat(balanceResponseDto.getCurrency()).isEqualTo(balanceRequest.getCurrency().name());
+			assertThat(balanceResponseDto.getCurrency()).isEqualTo(balanceRequest.getCurrency());
 			assertThat(balanceResponseDto.getAvailableAmount()).isEqualByComparingTo(balanceRequest.getAvailableAmount());
 		};
 	}
@@ -108,13 +107,13 @@ class AccountControllerIntegrationTest {
 		assertThat(headers).hasSize(3).containsEntry("originator", ORIGINATOR).containsKey("createdAt").containsKey("uuid");
 		assertThat(headers.get("createdAt")).isNotNull();
 		assertThat(headers.get("uuid")).isNotNull();
-		AccountDto receivedAccountDto = objectMapper.readValue(message.getBody(), AccountDto.class);
-		assertThat(receivedAccountDto).isEqualTo(response);
-	}
-	
-	@SneakyThrows(IOException.class)
-	private ApiError apiError(ResultActions resultActions) {
-		return objectMapper.readValue(resultActions.andReturn().getResponse().getContentAsString(), ApiError.class);
+		Account receivedAccount = objectMapper.readValue(message.getBody(), Account.class);
+		assertThat(receivedAccount).isNotNull()
+				.satisfies(account -> {
+					assertThat(account.getId()).isEqualTo(response.getAccountId());
+					assertThat(account.getCustomerId()).isEqualTo(response.getCustomerId());
+					assertThat(account.getReference()).isEqualTo(response.getReference());
+				});
 	}
 	
 	@Nested
@@ -123,8 +122,8 @@ class AccountControllerIntegrationTest {
 		
 		private static Stream<List<BalanceRequestDto>> provideBalanceRequestData() {
 			return Stream.of(
-					List.of(new BalanceRequestDto(USD, BigDecimal.valueOf(100)), new BalanceRequestDto(EUR, BigDecimal.valueOf(200))),
-					List.of(new BalanceRequestDto(EUR, BigDecimal.valueOf(300)))
+					List.of(new BalanceRequestDto(USD.name(), BigDecimal.valueOf(100)), new BalanceRequestDto(EUR.name(), BigDecimal.valueOf(200))),
+					List.of(new BalanceRequestDto(EUR.name(), BigDecimal.valueOf(300)))
 			);
 		}
 		
@@ -149,14 +148,21 @@ class AccountControllerIntegrationTest {
 		
 		@Test
 		void createAccount_withInvalidCurrency_returnsBadRequestWithErrorMessage() throws Exception {
-			String invalidAccountRequestJson = TestFileUtil.readFileAsString("invalid_currency_account_request.json");
+			var accountRequestDto = CreateAccountRequest.builder()
+					.customerId(1L)
+					.reference(UUID.randomUUID().toString())
+					.country("USA")
+					.balances(List.of(new BalanceRequestDto("INV", BigDecimal.valueOf(300))))
+					.build();
 			
 			ResultActions resultActions = mockMvc.perform(post(ACCOUNT_API_ENDPOINT)
-					.contentType(APPLICATION_JSON).content(invalidAccountRequestJson)).andExpect(status().isBadRequest());
+							.contentType(APPLICATION_JSON)
+							.content(objectMapper.writeValueAsString(accountRequestDto)))
+					.andExpect(status().isBadRequest());
 			
-			ApiError apiError = apiError(resultActions);
-			assertThat(apiError.getMessage()).isEqualTo("Invalid request payload");
-			assertThat(apiError.getDebugMessage()).contains("JSON parse error", "not one of the values accepted for Enum class: [EUR, GBP, USD]");
+			ApiError apiError = objectMapper.readValue(resultActions.andReturn().getResponse().getContentAsString(), ApiError.class);
+			assertThat(apiError.getMessage()).isEqualTo("Invalid currency");
+			assertThat(apiError.getDebugMessage()).contains("Invalid currency: INV");
 			assertThat(apiError.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
 		}
 		
@@ -165,7 +171,7 @@ class AccountControllerIntegrationTest {
 			ResultActions resultActions = mockMvc.perform(post(ACCOUNT_API_ENDPOINT)
 					.contentType(APPLICATION_JSON).content("{}")).andExpect(status().isBadRequest());
 			
-			ApiError apiError = apiError(resultActions);
+			ApiError apiError = objectMapper.readValue(resultActions.andReturn().getResponse().getContentAsString(), ApiError.class);
 			assertThat(apiError.getMessage()).isEqualTo("Validation error");
 			assertThat(apiError.getDebugMessage()).isEqualTo("One or more fields have an error");
 			assertThat(apiError.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -192,8 +198,8 @@ class AccountControllerIntegrationTest {
 			assertThat(response.getAccountId()).isEqualTo(1L);
 			assertThat(response.getCustomerId()).isEqualTo(1L);
 			assertAccountCreatedWithBalances(response, List.of(
-					new BalanceRequestDto(USD, BigDecimal.valueOf(100)),
-					new BalanceRequestDto(EUR, BigDecimal.valueOf(200)))
+					new BalanceRequestDto(USD.name(), BigDecimal.valueOf(100)),
+					new BalanceRequestDto(EUR.name(), BigDecimal.valueOf(200)))
 			);
 		}
 		

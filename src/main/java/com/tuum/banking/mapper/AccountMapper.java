@@ -16,4 +16,7 @@ public interface AccountMapper extends BaseMapper<Account> {
 	@ResultMap("AccountResultMap")
 	Optional<Account> getAccountWithBalances(Long accountId);
 	
+	@Select("SELECT * FROM account WHERE id = #{accountId}")
+	Optional<Account> selectById(Long accountId);
+	
 }

@@ -1,7 +1,7 @@
-package com.tuum.banking.domain;
+package com.tuum.banking.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
+import com.tuum.banking.domain.Transaction.TransactionDirection;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -10,20 +10,14 @@ import java.math.BigDecimal;
 
 @Getter
 @Setter
-@Builder
-@AllArgsConstructor
 @NoArgsConstructor
-public class Transaction extends BaseEntity {
+@EqualsAndHashCode
+public class TransactionDto {
+	private Long transactionId;
 	private Long accountId;
-	private Long balanceId;
 	private BigDecimal amount;
+	private String currency;
 	private TransactionDirection direction;
 	private String description;
 	private BigDecimal balanceAfterTransaction;
-	private String currency;
-	private String reference;
-	
-	public enum TransactionDirection {
-		IN, OUT
-	}
 }

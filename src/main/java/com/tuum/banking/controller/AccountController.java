@@ -1,6 +1,9 @@
 package com.tuum.banking.controller;
 
 import com.tuum.banking.configuration.logging.Loggable;
+import com.tuum.banking.converter.AccountConverter;
+import com.tuum.banking.converter.BalanceConverter;
+import com.tuum.banking.domain.Account;
 import com.tuum.banking.dto.AccountDto;
 import com.tuum.banking.dto.CreateAccountRequest;
 import com.tuum.banking.service.AccountService;
@@ -22,13 +25,21 @@ public class AccountController {
 	@Loggable
 	@PostMapping
 	public AccountDto createAccount(@Valid @RequestBody CreateAccountRequest createAccountRequest) {
-		return accountService.createAccount(createAccountRequest);
+		Account account = accountService.createAccount(createAccountRequest);
+		return convertAccountToDto(account);
 	}
 	
 	@Loggable
 	@GetMapping("/{accountId}")
 	public AccountDto getAccount(@PathVariable Long accountId) {
-		return accountService.getAccount(accountId);
+		Account account = accountService.getAccount(accountId);
+		return convertAccountToDto(account);
+	}
+	
+	private AccountDto convertAccountToDto(Account account) {
+		AccountDto accountDto = AccountConverter.toDto(account);
+		accountDto.setBalances(account.getBalances().stream().map(BalanceConverter::toResponseDto).toList());
+		return accountDto;
 	}
 	
 }

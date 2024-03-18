@@ -7,6 +7,8 @@ CREATE TABLE transaction
     direction                 VARCHAR(3)     NOT NULL,
     description               VARCHAR(255)   NOT NULL,
     balance_after_transaction NUMERIC(15, 2) NOT NULL,
+    currency  VARCHAR(5)  NOT NULL,
+    reference VARCHAR(36) NOT NULL UNIQUE,
     created_at                TIMESTAMPTZ    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at                TIMESTAMPTZ    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (account_id) REFERENCES account (id),

@@ -1,11 +1,9 @@
 package com.tuum.banking.service;
 
-import com.tuum.banking.configuration.exception.AccountNotFoundException;
+import com.tuum.banking.configuration.exception.InvalidAccountException;
 import com.tuum.banking.converter.AccountConverter;
-import com.tuum.banking.converter.BalanceConverter;
 import com.tuum.banking.domain.Account;
 import com.tuum.banking.domain.Balance;
-import com.tuum.banking.dto.AccountDto;
 import com.tuum.banking.dto.CreateAccountRequest;
 import com.tuum.banking.mapper.AccountMapper;
 import com.tuum.banking.service.lock.Lock;
@@ -24,23 +22,20 @@ public class AccountService {
 	
 	@Transactional
 	@Lock(key = "#createAccountRequest.reference")
-	public AccountDto createAccount(CreateAccountRequest createAccountRequest) {
+	public Account createAccount(CreateAccountRequest createAccountRequest) {
 		Account account = AccountConverter.toEntity(createAccountRequest);
 		accountMapper.insert(account);
 		List<Balance> balances = balanceService.createBalances(account.getId(), createAccountRequest.getBalances());
-		AccountDto accountDto = AccountConverter.toDto(account);
-		accountDto.setBalances(balances.stream().map(BalanceConverter::toResponseDto).toList());
-		rabbitMQPublisher.publishAccountCreated(accountDto);
-		return accountDto;
+		account.setBalances(balances);
+		rabbitMQPublisher.publishAccountCreated(account);
+		return account;
 	}
 	
-	public AccountDto getAccount(Long accountId) {
-		Account account = accountMapper.getAccountWithBalances(accountId).orElseThrow(
-				() -> new AccountNotFoundException(String.format("Account with ID %s does not exist", accountId))
-		);
-		AccountDto accountDto = AccountConverter.toDto(account);
-		accountDto.setBalances(account.getBalances().stream().map(BalanceConverter::toResponseDto).toList());
-		return accountDto;
+	public Account getAccount(Long accountId) {
+		return accountMapper.getAccountWithBalances(accountId).orElseThrow(() -> new InvalidAccountException(accountId));
 	}
 	
+	public Account getAccountById(Long accountId) {
+		return accountMapper.selectById(accountId).orElseThrow(() -> new InvalidAccountException(accountId));
+	}
 }

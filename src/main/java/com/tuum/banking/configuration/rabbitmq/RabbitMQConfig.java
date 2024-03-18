@@ -12,5 +12,10 @@ public class RabbitMQConfig {
 		return new Queue(RabbitMQConstants.ACCOUNT_CREATED, true);
 	}
 	
+	@Bean
+	public Queue transactionCreatedQueue() {
+		return new Queue(RabbitMQConstants.TRANSACTION_CREATED, true);
+	}
+	
 }
 

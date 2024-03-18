@@ -16,7 +16,7 @@ public class BalanceConverter {
 	
 	public static Balance toEntity(BalanceRequestDto balanceResponseDto) {
 		Balance balance = new Balance();
-		balance.setCurrency(balanceResponseDto.getCurrency().name());
+		balance.setCurrency(balanceResponseDto.getCurrency());
 		balance.setAvailableAmount(balanceResponseDto.getAvailableAmount());
 		return balance;
 	}
