@@ -27,7 +27,7 @@ class RabbitMQPublisherTest {
 	
 	@Test
 	@SneakyThrows
-	void publishAccountCreated() {
+	void publishAccountCreated_WhenJsonProcessingExceptionThrown_ShouldThrowJsonConversionException() {
 		Mockito.when(objectMapper.writeValueAsString(any())).thenThrow(JsonProcessingException.class);
 		
 		Throwable thrown = catchThrowable(() -> rabbitMQPublisher.publishAccountCreated(new AccountDto()));
