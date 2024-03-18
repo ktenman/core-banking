@@ -5,7 +5,7 @@
     <resultMap id="AccountResultMap" type="com.tuum.banking.domain.Account">
         <id property="id" column="id"/>
         <result property="customerId" column="customer_id"/>
-        <result property="country" column="country"/>
+        <result property="countryCode" column="country_code"/>
         <result property="createdAt" column="created_at"/>
         <result property="updatedAt" column="updated_at"/>
         <collection property="balances" ofType="com.tuum.banking.domain.Balance" resultMap="BalanceResultMap"/>

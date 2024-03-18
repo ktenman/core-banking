@@ -7,6 +7,8 @@ plugins {
 group = "com.tuum"
 version = "0.0.1-SNAPSHOT"
 
+val mybatisVersion = "3.0.3"
+
 java {
     sourceCompatibility = JavaVersion.VERSION_21
 }
@@ -14,6 +16,9 @@ java {
 configurations {
     compileOnly {
         extendsFrom(configurations.annotationProcessor.get())
+    }
+    testCompileOnly {
+        extendsFrom(configurations.testAnnotationProcessor.get())
     }
 }
 
@@ -25,18 +30,18 @@ extra["springCloudVersion"] = "2023.0.0"
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-amqp")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-data-redis-reactive")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.flywaydb:flyway-core")
-    implementation("org.springframework.amqp:spring-rabbit-stream")
-    implementation("org.springframework.cloud:spring-cloud-bus")
-    implementation("org.springframework.cloud:spring-cloud-stream")
-    implementation("org.springframework.cloud:spring-cloud-stream-binder-rabbit")
+    implementation("org.mybatis.spring.boot:mybatis-spring-boot-starter:$mybatisVersion")
+    implementation("com.baomidou:mybatis-plus-spring-boot3-starter:3.5.5")
     compileOnly("org.projectlombok:lombok")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     developmentOnly("org.springframework.boot:spring-boot-docker-compose")
     runtimeOnly("org.postgresql:postgresql")
     annotationProcessor("org.projectlombok:lombok")
+    testAnnotationProcessor("org.projectlombok:lombok")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.boot:spring-boot-testcontainers")
     testImplementation("io.projectreactor:reactor-test")
@@ -45,6 +50,7 @@ dependencies {
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:postgresql")
     testImplementation("org.testcontainers:rabbitmq")
+    testImplementation("org.mybatis.spring.boot:mybatis-spring-boot-starter-test:$mybatisVersion")
 }
 
 dependencyManagement {

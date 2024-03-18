@@ -1,20 +1,52 @@
 services:
   postgres:
-    image: 'postgres:latest'
+    image: postgres:16.2-alpine
     environment:
-      - 'POSTGRES_DB=mydatabase'
-      - 'POSTGRES_PASSWORD=secret'
-      - 'POSTGRES_USER=myuser'
+      POSTGRES_DB: core-banking
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
     ports:
-      - '5432'
-  rabbitmq:
-    image: 'rabbitmq:latest'
-    environment:
-      - 'RABBITMQ_DEFAULT_PASS=secret'
-      - 'RABBITMQ_DEFAULT_USER=myuser'
-    ports:
-      - '5672'
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 20s
+      timeout: 10s
+      retries: 10
   redis:
-    image: 'redis:latest'
+    image: redis:7.2-alpine
     ports:
-      - '6379'
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --requirepass something
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-a ${REDIS_PASSWORD}", "ping" ]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+  rabbitmq:
+    image: rabbitmq:3.9-management-alpine
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: somethingdocker
+    healthcheck:
+      test: [ "CMD", "rabbitmqctl", "status" ]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+
+volumes:
+  postgres_data:
+  redis-data:
+  rabbitmq-data:
+
+networks:
+  mynetwork:
+
