@@ -1,4 +1,4 @@
-package com.helmes.recruitment.formhandler.configuration.exception;
+package com.tuum.banking.configuration.exception;
 
 public class AccessDeniedException extends RuntimeException {
 	

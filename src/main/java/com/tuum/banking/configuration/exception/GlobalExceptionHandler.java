@@ -1,4 +1,4 @@
-package com.helmes.recruitment.formhandler.configuration.exception;
+package com.tuum.banking.configuration.exception;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -24,6 +25,16 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler({WebExchangeBindException.class, MethodArgumentNotValidException.class})
 	public ResponseEntity<ApiError> handleValidationExceptions(Exception exception) {
 		return handleValidationException(exception);
+	}
+	
+	@ExceptionHandler(HttpMessageNotReadableException.class)
+	public ResponseEntity<ApiError> handleHttpMessageNotReadableException(HttpMessageNotReadableException exception) {
+		ApiError apiError = ApiError.builder()
+				.status(HttpStatus.BAD_REQUEST)
+				.message("Invalid request payload")
+				.debugMessage(exception.getMessage())
+				.build();
+		return new ResponseEntity<>(apiError, apiError.getStatus());
 	}
 	
 	@ExceptionHandler(Exception.class)
