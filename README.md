@@ -233,18 +233,22 @@ To support horizontal scaling and handle increased traffic, the application can 
    independently without relying on server-side session state. This allows for easier horizontal scaling and enables the
    load balancer to route requests to any available instance.
 3. **Database Scalability:**
-   3.1 **Read Replicas:** Utilize multiple read replica databases to handle read-heavy workloads. Read replicas are
+
+3.1. **Read Replicas:** Utilize multiple read replica databases to handle read-heavy workloads. Read replicas are
    separate database instances that receive real-time updates from the primary database and can serve read queries. This
    reduces the load on the primary database and improves read performance.
-   3.2 **Database Sharding:** Consider implementing database sharding, which involves partitioning the data across
+
+3.2 **Database Sharding:** Consider implementing database sharding, which involves partitioning the data across
    multiple database instances based on a sharding key (e.g., account ID). Each shard holds a subset of the data,
    allowing for distributed data storage and processing. Sharding can significantly improve write performance and
    overall scalability.
 4. **Distributed Caching:**
-   4.1 **Redis Cluster:** Implement a distributed Redis caching solution using Redis Cluster. Redis Cluster allows you
+
+4.1. **Redis Cluster:** Implement a distributed Redis caching solution using Redis Cluster. Redis Cluster allows you
    to distribute the caching load across multiple Redis instances, providing improved performance and fault tolerance.
    It automatically handles data sharding and replication, ensuring high availability and scalability.
-   4.2 **Caching Strategies:** Employ appropriate caching strategies, such as read-through, write-through, or
+
+4.2. **Caching Strategies:** Employ appropriate caching strategies, such as read-through, write-through, or
    write-behind caching, depending on the application's read and write patterns. These strategies help in reducing the
    load on the database and improving response times.
 5. **Asynchronous Processing:** Utilize asynchronous processing techniques, such as message queues (e.g., RabbitMQ), to
