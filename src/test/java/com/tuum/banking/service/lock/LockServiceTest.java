@@ -11,6 +11,10 @@ import org.mockito.quality.Strictness;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 
+import java.time.Clock;
+
+import static com.tuum.banking.service.lock.LockService.DEFAULT_LOCK_EXPIRATION_SECONDS;
+import static com.tuum.banking.service.lock.LockService.LOCK_PREFIX;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -23,7 +27,6 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class LockServiceTest {
-	
 	private static final String DEFAULT_LOCK_IDENTIFIER = "testLock";
 	
 	@Mock
@@ -31,6 +34,9 @@ class LockServiceTest {
 	
 	@Mock
 	private ValueOperations<String, String> valueOperations;
+	
+	@Mock
+	private Clock clock;
 	
 	@InjectMocks
 	private LockService lockService;
@@ -52,13 +58,16 @@ class LockServiceTest {
 	
 	@Test
 	void shouldThrowExceptionWhenLockIsAlreadyAcquired() {
-		when(valueOperations.setIfAbsent("lock:" + DEFAULT_LOCK_IDENTIFIER, "locked", 60, SECONDS)).thenReturn(false);
+		when(valueOperations.setIfAbsent(LOCK_PREFIX + DEFAULT_LOCK_IDENTIFIER, "locked", DEFAULT_LOCK_EXPIRATION_SECONDS, SECONDS))
+				.thenReturn(false);
+		when(clock.millis()).thenReturn(0L, 50L, 100L);
 		
-		assertThatThrownBy(() -> lockService.acquireLock(DEFAULT_LOCK_IDENTIFIER))
+		assertThatThrownBy(() -> lockService.acquireLock(DEFAULT_LOCK_IDENTIFIER, 100, 50))
 				.isInstanceOf(IllegalStateException.class)
 				.hasMessageContaining("Unable to acquire lock for identifier: " + DEFAULT_LOCK_IDENTIFIER);
 		
-		verify(valueOperations, times(1)).setIfAbsent(anyString(), anyString(), anyLong(), any());
+		verify(valueOperations, times(1))
+				.setIfAbsent(LOCK_PREFIX + DEFAULT_LOCK_IDENTIFIER, "locked", DEFAULT_LOCK_EXPIRATION_SECONDS, SECONDS);
 	}
 	
 	@Test
@@ -68,6 +77,4 @@ class LockServiceTest {
 		
 		verify(redisTemplate, times(1)).delete("lock:" + DEFAULT_LOCK_IDENTIFIER);
 	}
-	
 }
-
