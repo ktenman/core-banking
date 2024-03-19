@@ -268,9 +268,9 @@ To support horizontal scaling and handle increased traffic, the application can 
 9. **Distributed Tracing:** Implement distributed tracing to gain visibility into the flow of requests across multiple
    services. This helps in identifying performance bottlenecks, latency issues, and optimizing the overall system
    performance.
-   10 **Continuous Performance Testing:** Regularly conduct performance tests to assess the application's scalability
-   and identify any performance degradation over time. This allows for proactive optimization and ensures the
-   application can handle the expected transaction volume.
+10. **Continuous Performance Testing:** Regularly conduct performance tests to assess the application's scalability
+    and identify any performance degradation over time. This allows for proactive optimization and ensures the
+    application can handle the expected transaction volume.
 
 By leveraging read replica databases, distributed Redis caching with multiple instances, and implementing the other
 scalability strategies mentioned above, the account application can be effectively scaled horizontally to handle a
