@@ -185,11 +185,11 @@ docker-compose -f docker-compose.yml up -d
 
 ## Performance Estimates
 
-Performance testing was conducted using Locust (version 2.24.0) on a **MacBook Pro 16-inch 2021** with an Apple **M1 Max
-** chip and 64 GB memory, the account application can handle approximately **300 requests per second** with logging and
+Performance testing was conducted using Locust (version 2.24.0) on a **MacBook Pro 16-inch 2021** with an Apple **M1 Max** 
+chip and 64 GB memory, the account application can handle approximately **300 requests per second** with logging and
 locking enabled. If logging and locking are removed from the create transaction endpoint, the application can handle
-around 600 requests per second. However, when the load is increased to 700 requests per second, a small percentage (
-around 0.07%) of requests start failing.
+around 600 requests per second. However, when the load is increased to 700 requests per second, a small percentage 
+(around 0.07%) of requests start failing.
 
 ## Explanation of Important Choices
 
