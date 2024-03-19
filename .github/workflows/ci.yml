@@ -22,7 +22,7 @@ jobs:
         with:
           arguments: test --info
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v4.0.1
+        uses: codecov/codecov-action@v4.1.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: ktenman/core-banking
