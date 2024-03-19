@@ -179,9 +179,9 @@ docker-compose -f docker-compose.yml up -d
 
 ## Key Features
 
--- **Account Management:** Create and retrieve accounts with associated balances.
--- **Transaction Processing:** Perform deposit and withdrawal transactions on accounts.
--- **Distributed Locking:** Implements Redis-based distributed locking for concurrency control.
+- **Account Management:** Create and retrieve accounts with associated balances.
+- **Transaction Processing:** Perform deposit and withdrawal transactions on accounts.
+- **Distributed Locking:** Implements Redis-based distributed locking for concurrency control.
 
 ## Performance Estimates
 
