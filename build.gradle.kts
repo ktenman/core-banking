@@ -11,6 +11,7 @@ version = "0.0.1-SNAPSHOT"
 
 val mybatisVersion = "3.0.3"
 val mybatisPlusVersion = "3.5.5"
+val springdocOpenApiVersion = "2.4.0"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_21
@@ -40,6 +41,7 @@ dependencies {
     implementation("org.flywaydb:flyway-core")
     implementation("org.mybatis.spring.boot:mybatis-spring-boot-starter:$mybatisVersion")
     implementation("com.baomidou:mybatis-plus-spring-boot3-starter:$mybatisPlusVersion")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:$springdocOpenApiVersion")
     compileOnly("org.projectlombok:lombok")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     developmentOnly("org.springframework.boot:spring-boot-docker-compose")

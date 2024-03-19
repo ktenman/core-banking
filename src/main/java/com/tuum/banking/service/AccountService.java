@@ -23,6 +23,9 @@ public class AccountService {
 	@Transactional
 	@Lock(key = "#createAccountRequest.reference")
 	public Account createAccount(CreateAccountRequest createAccountRequest) {
+		accountMapper.selectByReference(createAccountRequest.getReference()).ifPresent(account -> {
+			throw new IllegalStateException("Account with reference: " + createAccountRequest.getReference() + " already exists");
+		});
 		Account account = AccountConverter.toEntity(createAccountRequest);
 		accountMapper.insert(account);
 		List<Balance> balances = balanceService.createBalances(account.getId(), createAccountRequest.getBalances());
@@ -31,8 +34,11 @@ public class AccountService {
 		return account;
 	}
 	
-	public Account getAccount(Long accountId) {
-		return accountMapper.getAccountWithBalances(accountId).orElseThrow(() -> new InvalidAccountException(accountId));
+	public Account getAccountWithBalances(Long accountId) {
+		Account account = getAccountById(accountId);
+		List<Balance> balances = balanceService.getBalancesByAccountId(accountId);
+		account.setBalances(balances);
+		return account;
 	}
 	
 	public Account getAccountById(Long accountId) {

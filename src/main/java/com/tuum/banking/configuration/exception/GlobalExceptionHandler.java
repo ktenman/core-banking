@@ -64,6 +64,17 @@ public class GlobalExceptionHandler {
 		return new ResponseEntity<>(apiError, apiError.getStatus());
 	}
 	
+	@ExceptionHandler(IllegalStateException.class)
+	public ResponseEntity<ApiError> handleIllegalStateException(IllegalStateException exception) {
+		ApiError apiError = ApiError.builder()
+				.status(HttpStatus.INTERNAL_SERVER_ERROR)
+				.message("Illegal state exception occurred")
+				.debugMessage(exception.getLocalizedMessage())
+				.build();
+		
+		return new ResponseEntity<>(apiError, apiError.getStatus());
+	}
+	
 	@ExceptionHandler({WebExchangeBindException.class, MethodArgumentNotValidException.class})
 	public ResponseEntity<ApiError> handleValidationExceptions(Exception exception) {
 		return handleValidationException(exception);

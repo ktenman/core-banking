@@ -29,7 +29,6 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -46,6 +45,7 @@ class AccountControllerIntegrationTest {
 	
 	private static final String ACCOUNT_API_ENDPOINT = "/api/accounts";
 	private static final String ORIGINATOR = "core-banking";
+	private static final String DEFAULT_ACCOUNT_REFERENCE = "99c0fe54-f41b-46d7-a497-7f7fbdc746ca";
 	@Autowired
 	MockMvc mockMvc;
 	@Autowired
@@ -61,7 +61,7 @@ class AccountControllerIntegrationTest {
 		Account account = new Account();
 		account.setCustomerId(1L);
 		account.setCountryCode("USA");
-		account.setReference(UUID.randomUUID().toString());
+		account.setReference(DEFAULT_ACCOUNT_REFERENCE);
 		accountMapper.insert(account);
 		
 		Balance balance1 = new Balance();
@@ -132,7 +132,7 @@ class AccountControllerIntegrationTest {
 		void createAccount_withValidRequest_returnsCreatedAccountWithBalances(List<BalanceRequestDto> balanceRequests) throws Exception {
 			var accountRequestDto = CreateAccountRequest.builder()
 					.customerId(1L)
-					.reference(UUID.randomUUID().toString())
+					.reference(DEFAULT_ACCOUNT_REFERENCE)
 					.country("USA")
 					.balances(balanceRequests)
 					.build();
@@ -147,10 +147,31 @@ class AccountControllerIntegrationTest {
 		}
 		
 		@Test
+		void createAccount_withExistingReference_returnsInternalServerErrorWithMessage() throws Exception {
+			createAccountWithBalances();
+			var accountRequestDto = CreateAccountRequest.builder()
+					.customerId(1L)
+					.reference(DEFAULT_ACCOUNT_REFERENCE)
+					.country("USA")
+					.balances(List.of(new BalanceRequestDto("EUR", BigDecimal.valueOf(300))))
+					.build();
+			
+			ResultActions resultActions = mockMvc.perform(post(ACCOUNT_API_ENDPOINT)
+							.contentType(APPLICATION_JSON)
+							.content(objectMapper.writeValueAsString(accountRequestDto)))
+					.andExpect(status().isInternalServerError());
+			
+			ApiError apiError = objectMapper.readValue(resultActions.andReturn().getResponse().getContentAsString(), ApiError.class);
+			assertThat(apiError.getMessage()).isEqualTo("Illegal state exception occurred");
+			assertThat(apiError.getDebugMessage()).isEqualTo("Account with reference: %s already exists", DEFAULT_ACCOUNT_REFERENCE);
+			assertThat(apiError.getStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		
+		@Test
 		void createAccount_withInvalidCurrency_returnsBadRequestWithErrorMessage() throws Exception {
 			var accountRequestDto = CreateAccountRequest.builder()
 					.customerId(1L)
-					.reference(UUID.randomUUID().toString())
+					.reference(DEFAULT_ACCOUNT_REFERENCE)
 					.country("USA")
 					.balances(List.of(new BalanceRequestDto("INV", BigDecimal.valueOf(300))))
 					.build();

@@ -6,6 +6,7 @@ import com.tuum.banking.domain.Transaction;
 import com.tuum.banking.dto.CreateTransactionRequest;
 import com.tuum.banking.dto.TransactionDto;
 import com.tuum.banking.service.TransactionService;
+import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,7 +33,7 @@ public class TransactionController {
 	
 	@Loggable
 	@GetMapping("/{accountId}")
-	public List<TransactionDto> getTransactions(@PathVariable Long accountId) {
+	public List<TransactionDto> getTransactions(@Parameter(example = "1") @PathVariable Long accountId) {
 		List<Transaction> transactions = transactionService.getTransactions(accountId);
 		return transactions.stream()
 				.map(TransactionConverter::toDto)

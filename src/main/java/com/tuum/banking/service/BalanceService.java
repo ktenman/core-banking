@@ -33,6 +33,10 @@ public class BalanceService {
 						"No balance found for account ID: " + accountId + " and currency: " + currency));
 	}
 	
+	public List<Balance> getBalancesByAccountId(Long accountId) {
+		return balanceMapper.findByAccountId(accountId);
+	}
+	
 	public BigDecimal calculateNewBalance(BigDecimal currentBalance, CreateTransactionRequest request) {
 		return switch (request.getDirection()) {
 			case IN -> currentBalance.add(request.getAmount());

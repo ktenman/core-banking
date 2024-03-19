@@ -1,6 +1,7 @@
 package com.tuum.banking.service.lock;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -18,6 +19,7 @@ import java.lang.reflect.Parameter;
 @Aspect
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class LockAspect {
 	private final LockService lockService;
 	private final ExpressionParser parser = new SpelExpressionParser();
@@ -32,10 +34,12 @@ public class LockAspect {
 				getKeyFromNestedProperty(keyExpression, joinPoint.getArgs()) :
 				getKeyFromDirectVariable(keyExpression, joinPoint);
 		lockService.acquireLock(lockKey);
+		log.info("Lock acquired for key {} with lock key {}", keyExpression, lockKey);
 		try {
 			return joinPoint.proceed();
 		} finally {
 			lockService.releaseLock(lockKey);
+			log.info("Lock released for key {} with lock key {}", keyExpression, lockKey);
 		}
 	}
 	

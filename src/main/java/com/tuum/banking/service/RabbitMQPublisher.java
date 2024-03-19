@@ -18,6 +18,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -48,19 +49,28 @@ public class RabbitMQPublisher {
 			messageBody = objectMapper.writeValueAsString(object);
 		} catch (JsonProcessingException e) {
 			log.error("Error while converting object to JSON", e);
-			throw new JsonConversionException("Failed to convert object to JSON", e);
+			throw new JsonConversionException(e);
 		}
 		String uuid = Optional.ofNullable(MDC.get("transactionId"))
 				.map(id -> id.replace("[", "").replace("]", "").trim())
 				.orElse(UUID.randomUUID().toString());
+		Map<String, Object> headers = Map.of(
+				"createdAt", Instant.now().toString(),
+				"uuid", uuid,
+				"originator", originator
+		);
 		Message message = MessageBuilder.withBody(messageBody.getBytes())
 				.setContentType(MessageProperties.CONTENT_TYPE_JSON)
-				.setHeader("createdAt", Instant.now().toString())
-				.setHeader("uuid", uuid)
-				.setHeader("originator", originator)
+				.copyHeaders(headers)
 				.build();
 		rabbitTemplate.convertAndSend(queue, message);
-		log.info("Published message to queue [queue: {}]", queue);
+		String headersJson;
+		try {
+			headersJson = objectMapper.writeValueAsString(headers);
+		} catch (JsonProcessingException e) {
+			throw new JsonConversionException(e);
+		}
+		log.info("Published message to queue [{}], {} {}", queue, headersJson, messageBody);
 	}
 	
 }

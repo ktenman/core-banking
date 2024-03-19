@@ -202,7 +202,6 @@ class TransactionControllerIntegrationTest {
 					.andExpect(status().isBadRequest());
 			
 			ApiError apiError = objectMapper.readValue(resultActions.andReturn().getResponse().getContentAsString(), ApiError.class);
-			
 			assertThat(apiError.getMessage()).isEqualTo("Validation error");
 			assertThat(apiError.getDebugMessage()).isEqualTo("One or more fields have an error");
 			assertThat(apiError.getValidationErrors()).containsEntry("description", "Description is required");
@@ -275,14 +274,14 @@ class TransactionControllerIntegrationTest {
 		}
 		
 		@Test
-		void getTransactions_withNonExistingAccountId_returnsEmptyList() throws Exception {
+		void getTransactions_withNonExistingAccountId_returnsNotFoundWithErrorMessage() throws Exception {
 			ResultActions resultActions = mockMvc.perform(get(TRANSACTION_API_ENDPOINT + "/{accountId}", 999L))
-					.andExpect(status().isOk());
+					.andExpect(status().isNotFound());
 			
-			List<TransactionDto> response = objectMapper.readValue(resultActions.andReturn().getResponse().getContentAsString(),
-					objectMapper.getTypeFactory().constructCollectionType(List.class, TransactionDto.class));
-			
-			assertThat(response).isEmpty();
+			ApiError apiError = objectMapper.readValue(resultActions.andReturn().getResponse().getContentAsString(), ApiError.class);
+			assertThat(apiError.getMessage()).isEqualTo("Account not found");
+			assertThat(apiError.getDebugMessage()).isEqualTo("Account with ID 999 does not exist");
+			assertThat(apiError.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
 		}
 	}
 }

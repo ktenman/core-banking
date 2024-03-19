@@ -7,6 +7,7 @@ import com.tuum.banking.domain.Account;
 import com.tuum.banking.dto.AccountDto;
 import com.tuum.banking.dto.CreateAccountRequest;
 import com.tuum.banking.service.AccountService;
+import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,8 +32,8 @@ public class AccountController {
 	
 	@Loggable
 	@GetMapping("/{accountId}")
-	public AccountDto getAccount(@PathVariable Long accountId) {
-		Account account = accountService.getAccount(accountId);
+	public AccountDto getAccount(@Parameter(example = "1") @PathVariable Long accountId) {
+		Account account = accountService.getAccountWithBalances(accountId);
 		return convertAccountToDto(account);
 	}
 	

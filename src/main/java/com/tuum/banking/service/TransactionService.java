@@ -48,6 +48,7 @@ public class TransactionService {
 	}
 	
 	public List<Transaction> getTransactions(Long accountId) {
-		return transactionMapper.selectByAccountId(accountId);
+		Account account = accountService.getAccountById(accountId);
+		return transactionMapper.selectByAccountId(account.getId());
 	}
 }
