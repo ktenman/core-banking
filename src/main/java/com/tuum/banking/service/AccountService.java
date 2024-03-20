@@ -8,10 +8,13 @@ import com.tuum.banking.dto.CreateAccountRequest;
 import com.tuum.banking.mapper.AccountMapper;
 import com.tuum.banking.service.lock.Lock;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+
+import static com.tuum.banking.configuration.RedisConfiguration.ACCOUNTS_CACHE;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +37,7 @@ public class AccountService {
 		return account;
 	}
 	
+	@Cacheable(value = ACCOUNTS_CACHE, key = "#accountId")
 	public Account getAccountWithBalances(Long accountId) {
 		Account account = getAccountById(accountId);
 		List<Balance> balances = balanceService.getBalancesByAccountId(accountId);

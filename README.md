@@ -171,7 +171,6 @@ docker-compose -f docker-compose.yml up -d
 
 ## Note on Development Tools
 
-- **Spring Boot DevTools** provides enhanced development capabilities.
 - **Project Lombok** minimizes boilerplate code, improving code clarity and maintainability.
 - This project is utilizing **Docker Compose support** introduced in Spring Boot 3.1.
 - The `@Loggable` annotation is used to automatically log method invocations and their durations, enhancing

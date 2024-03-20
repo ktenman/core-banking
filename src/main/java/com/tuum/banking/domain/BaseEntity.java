@@ -7,11 +7,12 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serializable;
 import java.time.Instant;
 
 @Getter
 @Setter
-public abstract class BaseEntity {
+public abstract class BaseEntity implements Serializable {
 	@TableId(type = IdType.AUTO)
 	private Long id;
 	

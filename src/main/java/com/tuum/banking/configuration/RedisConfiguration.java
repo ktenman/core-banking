@@ -16,12 +16,16 @@ import java.util.Map;
 public class RedisConfiguration {
 	
 	public static final String ONE_DAY_CACHE = "one-day-cache";
+	public static final String ACCOUNTS_CACHE = "accounts-v1";
+	public static final String TRANSACTIONS_CACHE = "transactions-v1";
 	private static final Duration DEFAULT_TTL = Duration.ofMinutes(1);
 	
 	@Bean
 	public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
 		Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
 		cacheConfigurations.put(ONE_DAY_CACHE, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofDays(1)));
+		cacheConfigurations.put(ACCOUNTS_CACHE, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofHours(1)));
+		cacheConfigurations.put(TRANSACTIONS_CACHE, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofHours(1)));
 		RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig().entryTtl(DEFAULT_TTL);
 		return RedisCacheManager.builder(connectionFactory)
 				.cacheDefaults(defaultConfig)
