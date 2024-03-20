@@ -26,7 +26,7 @@ public class TransactionService {
 	private final BalanceService balanceService;
 	
 	@Transactional
-	@Lock(key = "#createTransactionRequest.accountId")
+	@Lock(key = "#request.accountId")
 	public Transaction createTransaction(CreateTransactionRequest request) {
 		Account account = accountService.getAccountById(request.getAccountId());
 		Balance balance = balanceService.getBalanceByAccountIdAndCurrency(request.getAccountId(), request.getCurrency());

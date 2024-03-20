@@ -1,6 +1,5 @@
 package com.tuum.banking.service.lock;
 
-import com.tuum.banking.dto.CreateAccountRequest;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.junit.jupiter.api.Test;
@@ -10,19 +9,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.BDDAssertions.catchThrowable;
-import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.never;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class LockAspectTest {
-	private static final String DEFAULT_IDENTIFIER = "123";
-	private static final String INVALID_VARIABLE = "invalidVariable";
 	
 	@Mock
 	private LockService lockService;
@@ -31,48 +25,50 @@ class LockAspectTest {
 	private ProceedingJoinPoint joinPoint;
 	
 	@Mock
-	private MethodSignature signature;
+	private MethodSignature methodSignature;
 	
 	@InjectMocks
 	private LockAspect lockAspect;
 	
 	@Test
-	void aroundLockedMethod_WithNestedProperty_ShouldAcquireAndReleaseLock() throws Throwable {
-		Object[] args = new Object[]{CreateAccountRequest.builder().reference(DEFAULT_IDENTIFIER).build()};
-		when(joinPoint.getArgs()).thenReturn(args);
-		when(joinPoint.getArgs()).thenReturn(args);
-		when(joinPoint.proceed()).thenReturn(null);
-		
-		lockAspect.aroundLockedMethod(joinPoint, createLock("#createAccountRequest.reference"));
-		
-		verify(lockService).acquireLock(DEFAULT_IDENTIFIER);
-		verify(lockService).releaseLock(DEFAULT_IDENTIFIER);
-		verify(joinPoint).proceed();
-	}
-	
-	@Test
 	void aroundLockedMethod_WithDirectVariable_ShouldAcquireAndReleaseLock() throws Throwable {
-		Object[] args = new Object[]{DEFAULT_IDENTIFIER};
-		when(joinPoint.getArgs()).thenReturn(args);
-		when(signature.getMethod()).thenReturn(getMethod("testMethod"));
-		when(joinPoint.proceed()).thenReturn(null);
-		when(joinPoint.getSignature()).thenReturn(signature);
+		Lock lock = createLock("#account");
+		TestAccount account = new TestAccount("123456");
 		
-		lockAspect.aroundLockedMethod(joinPoint, createLock("#reference"));
+		when(joinPoint.getSignature()).thenReturn(methodSignature);
+		when(methodSignature.getMethod()).thenReturn(TestService.class.getMethod("doSomething", TestAccount.class));
+		when(joinPoint.getArgs()).thenReturn(new Object[]{account});
 		
-		verify(lockService).acquireLock(DEFAULT_IDENTIFIER);
-		verify(lockService).releaseLock(DEFAULT_IDENTIFIER);
-		verify(joinPoint).proceed();
+		lockAspect.aroundLockedMethod(joinPoint, lock);
+		
+		verify(lockService, times(1)).acquireLock(account.toString());
+		verify(lockService, times(1)).releaseLock(account.toString());
 	}
 	
 	@Test
-	void aroundLockedMethod_WithInvalidDirectVariable_ShouldThrowException() {
-		Throwable thrown = catchThrowable(() -> lockAspect.aroundLockedMethod(joinPoint, createLock(INVALID_VARIABLE)));
+	void aroundLockedMethod_WithNestedProperty_ShouldAcquireAndReleaseLock() throws Throwable {
+		Lock lock = createLock("#account.accountNumber");
+		String lockKey = "123456";
+		TestAccount account = new TestAccount("123456");
+		when(joinPoint.getSignature()).thenReturn(methodSignature);
+		when(methodSignature.getMethod()).thenReturn(TestService.class.getMethod("doSomething", TestAccount.class));
+		when(joinPoint.getArgs()).thenReturn(new Object[]{account});
 		
-		assertThat(thrown).isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("No argument found with name: %s in method signature", INVALID_VARIABLE);
-		verify(lockService, never()).acquireLock(anyString());
-		verify(lockService, never()).releaseLock(anyString());
+		lockAspect.aroundLockedMethod(joinPoint, lock);
+		
+		verify(lockService, times(1)).acquireLock(lockKey);
+		verify(lockService, times(1)).releaseLock(lockKey);
+	}
+	
+	@Test
+	void aroundLockedMethod_WithInvalidDirectVariable_ShouldThrowException() throws NoSuchMethodException {
+		Lock lock = createLock("#invalidVariable");
+		when(joinPoint.getSignature()).thenReturn(methodSignature);
+		when(methodSignature.getMethod()).thenReturn(TestService.class.getMethod("doSomething", TestAccount.class));
+		
+		assertThatThrownBy(() -> lockAspect.aroundLockedMethod(joinPoint, lock))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessageContaining("No argument found with name: invalidVariable");
 	}
 	
 	private Lock createLock(String key) {
@@ -89,12 +85,11 @@ class LockAspectTest {
 		};
 	}
 	
-	private Method getMethod(String name) throws NoSuchMethodException {
-		return TestClass.class.getMethod(name, String.class);
+	record TestAccount(String accountNumber) {
 	}
 	
-	private static class TestClass {
-		public void testMethod(String reference) {
+	static class TestService {
+		public void doSomething(TestAccount account) {
 		}
 	}
 }

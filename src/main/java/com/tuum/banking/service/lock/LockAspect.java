@@ -29,61 +29,44 @@ public class LockAspect {
 		if (lock.key().isBlank()) {
 			throw new IllegalArgumentException("Lock key cannot be empty");
 		}
-		String keyExpression = lock.key();
-		String lockKey = keyExpression.contains(".") ?
-				getKeyFromNestedProperty(keyExpression, joinPoint.getArgs()) :
-				getKeyFromDirectVariable(keyExpression, joinPoint);
+		String lockKey = getKey(lock.key(), joinPoint);
 		lockService.acquireLock(lockKey);
-		log.info("Lock acquired for key {} with lock key {}", keyExpression, lockKey);
+		log.info("Lock acquired for key {} with lock key {}", lock.key(), lockKey);
 		try {
 			return joinPoint.proceed();
 		} finally {
 			lockService.releaseLock(lockKey);
-			log.info("Lock released for key {} with lock key {}", keyExpression, lockKey);
+			log.info("Lock released for key {} with lock key {}", lock.key(), lockKey);
 		}
 	}
 	
-	private String getKeyFromNestedProperty(String keyExpression, Object[] args) {
-		EvaluationContext context = new StandardEvaluationContext();
-		setArgumentVariablesInContext(context, args);
-		
-		Expression expression = parser.parseExpression(keyExpression);
-		return expression.getValue(context, String.class);
-	}
-	
-	private void setArgumentVariablesInContext(EvaluationContext context, Object[] args) {
-		for (Object arg : args) {
-			if (arg != null) {
-				String variableName = getVariableName(arg);
-				context.setVariable(variableName, arg);
-			}
-		}
-	}
-	
-	private String getVariableName(Object arg) {
-		String argName = arg.getClass().getSimpleName();
-		return argName.substring(0, 1).toLowerCase() + argName.substring(1);
-	}
-	
-	private String getKeyFromDirectVariable(String keyExpression, ProceedingJoinPoint joinPoint) {
+	private String getKey(String keyExpression, ProceedingJoinPoint joinPoint) {
 		if (keyExpression.startsWith("#")) {
 			keyExpression = keyExpression.substring(1);
 		}
 		MethodSignature signature = (MethodSignature) joinPoint.getSignature();
 		if (signature == null) {
-			throw new IllegalArgumentException("No argument found with name: " + keyExpression + " in method signature");
+			throw new IllegalArgumentException("No argument found in method signature");
 		}
 		Method method = signature.getMethod();
 		Parameter[] parameters = method.getParameters();
 		Object[] args = joinPoint.getArgs();
+		String[] keys = keyExpression.split("\\.");
+		String rootKey = keys[0];
 		for (int i = 0; i < parameters.length; i++) {
 			Parameter parameter = parameters[i];
 			String parameterName = parameter.getName();
-			if (parameterName.equalsIgnoreCase(keyExpression)) {
-				return args[i].toString();
+			if (parameterName.equalsIgnoreCase(rootKey)) {
+				if (keys.length > 1) {
+					String nestedKey = keys[1];
+					EvaluationContext context = new StandardEvaluationContext(args[i]);
+					Expression expression = parser.parseExpression(nestedKey);
+					return expression.getValue(context, String.class);
+				} else {
+					return args[i].toString();
+				}
 			}
 		}
-		throw new IllegalArgumentException("No argument found with name: " + keyExpression);
+		throw new IllegalArgumentException("No argument found with name: " + rootKey);
 	}
-	
 }
