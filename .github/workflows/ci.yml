@@ -22,23 +22,27 @@ jobs:
         with:
           arguments: test --info
       - name: Upload coverage reports to Codecov
+        if: github.actor != 'dependabot[bot]'
         uses: codecov/codecov-action@v4.1.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: ktenman/core-banking
       - name: Cache SonarCloud packages
+        if: github.actor != 'dependabot[bot]'
         uses: actions/cache@v4.0.1
         with:
           path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
       - name: Cache Gradle packages
+        if: github.actor != 'dependabot[bot]'
         uses: actions/cache@v4.0.1
         with:
           path: ~/.gradle/caches
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
           restore-keys: ${{ runner.os }}-gradle
       - name: Build and analyze
+        if: github.actor != 'dependabot[bot]'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
