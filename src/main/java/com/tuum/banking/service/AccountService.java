@@ -10,7 +10,6 @@ import com.tuum.banking.service.lock.Lock;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -22,16 +21,20 @@ public class AccountService {
 	private final AccountMapper accountMapper;
 	private final BalanceService balanceService;
 	private final RabbitMQPublisher rabbitMQPublisher;
+	private final TransactionRunner transactionRunner;
 	
-	@Transactional
 	@Lock(key = "#createAccountRequest.reference")
 	public Account createAccount(CreateAccountRequest createAccountRequest) {
 		accountMapper.selectByReference(createAccountRequest.getReference()).ifPresent(account -> {
 			throw new IllegalStateException("Account with reference: " + createAccountRequest.getReference() + " already exists");
 		});
 		Account account = AccountConverter.toEntity(createAccountRequest);
-		accountMapper.insert(account);
-		List<Balance> balances = balanceService.createBalances(account.getId(), createAccountRequest.getBalances());
+		
+		List<Balance> balances = transactionRunner.execute(() -> {
+			accountMapper.insert(account);
+			return balanceService.createBalances(account.getId(), createAccountRequest.getBalances());
+		});
+		
 		account.setBalances(balances);
 		rabbitMQPublisher.publishAccountCreated(account);
 		return account;

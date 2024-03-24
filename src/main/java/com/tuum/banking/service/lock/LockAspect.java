@@ -30,7 +30,8 @@ public class LockAspect {
 			throw new IllegalArgumentException("Lock key cannot be empty");
 		}
 		String lockKey = getKey(lock.key(), joinPoint);
-		lockService.acquireLock(lockKey);
+		long timeoutMillis = lock.timeoutMillis();
+		lockService.acquireLock(lockKey, timeoutMillis);
 		log.info("Lock acquired for key {} with lock key {}", lock.key(), lockKey);
 		try {
 			return joinPoint.proceed();

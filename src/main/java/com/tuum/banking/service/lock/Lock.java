@@ -66,4 +66,14 @@ public @interface Lock {
 	 * @return the key or SpEL expression for the key
 	 */
 	String key();
+	
+	/**
+	 * The timeout value for the lock in milliseconds.
+	 * <p>
+	 * Specifies the maximum time the lock should be held before automatically releasing it.
+	 * Default value is 60,000 milliseconds (60 seconds).
+	 *
+	 * @return the timeout value in milliseconds
+	 */
+	long timeoutMillis() default 60000;
 }
