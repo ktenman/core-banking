@@ -41,6 +41,9 @@ public class LockAspect {
 	}
 	
 	private String getKey(String keyExpression, ProceedingJoinPoint joinPoint) {
+		if (keyExpression.startsWith("'") && keyExpression.endsWith("'")) {
+			return keyExpression.substring(1, keyExpression.length() - 1);
+		}
 		if (keyExpression.startsWith("#")) {
 			keyExpression = keyExpression.substring(1);
 		}
