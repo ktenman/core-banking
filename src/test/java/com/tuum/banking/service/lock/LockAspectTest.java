@@ -17,16 +17,12 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class LockAspectTest {
-	
 	@Mock
 	private LockService lockService;
-	
 	@Mock
 	private ProceedingJoinPoint joinPoint;
-	
 	@Mock
 	private MethodSignature methodSignature;
-	
 	@InjectMocks
 	private LockAspect lockAspect;
 	
@@ -34,14 +30,13 @@ class LockAspectTest {
 	void aroundLockedMethod_WithDirectVariable_ShouldAcquireAndReleaseLock() throws Throwable {
 		Lock lock = createLock("#account");
 		TestAccount account = new TestAccount("123456");
-		
 		when(joinPoint.getSignature()).thenReturn(methodSignature);
 		when(methodSignature.getMethod()).thenReturn(TestService.class.getMethod("doSomething", TestAccount.class));
 		when(joinPoint.getArgs()).thenReturn(new Object[]{account});
 		
 		lockAspect.aroundLockedMethod(joinPoint, lock);
 		
-		verify(lockService, times(1)).acquireLock(account.toString());
+		verify(lockService, times(1)).acquireLock(account.toString(), lock.timeoutMillis());
 		verify(lockService, times(1)).releaseLock(account.toString());
 	}
 	
@@ -56,7 +51,18 @@ class LockAspectTest {
 		
 		lockAspect.aroundLockedMethod(joinPoint, lock);
 		
-		verify(lockService, times(1)).acquireLock(lockKey);
+		verify(lockService, times(1)).acquireLock(lockKey, lock.timeoutMillis());
+		verify(lockService, times(1)).releaseLock(lockKey);
+	}
+	
+	@Test
+	void aroundLockedMethod_WithStaticStringValue_ShouldAcquireAndReleaseLock() throws Throwable {
+		String lockKey = "myStaticLockKey";
+		Lock lock = createLock("'" + lockKey + "'");
+		
+		lockAspect.aroundLockedMethod(joinPoint, lock);
+		
+		verify(lockService, times(1)).acquireLock(lockKey, lock.timeoutMillis());
 		verify(lockService, times(1)).releaseLock(lockKey);
 	}
 	
@@ -79,6 +85,11 @@ class LockAspectTest {
 			}
 			
 			@Override
+			public long timeoutMillis() {
+				return 60_000;
+			}
+			
+			@Override
 			public Class<? extends Annotation> annotationType() {
 				return Lock.class;
 			}
@@ -90,6 +101,9 @@ class LockAspectTest {
 	
 	static class TestService {
 		public void doSomething(TestAccount account) {
+		}
+		
+		public void doSomething() {
 		}
 	}
 }

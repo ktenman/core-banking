@@ -38,7 +38,7 @@ public class LockService {
 	
 	private boolean tryAcquireLock(String identifier, long timeoutMillis) {
 		String lockKey = LOCK_PREFIX + identifier;
-		return Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(lockKey, "locked", timeoutMillis, TimeUnit.SECONDS));
+		return Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(lockKey, "locked", timeoutMillis, TimeUnit.MILLISECONDS));
 	}
 	
 	private void sleep(long millis) {
