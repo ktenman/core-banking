@@ -29,6 +29,9 @@ class TransactionServiceTest {
 	private TransactionMapper transactionMapper;
 	
 	@Mock
+	private TransactionRunner transactionRunner;
+	
+	@Mock
 	private RabbitMQPublisher rabbitMQPublisher;
 	
 	@Mock
@@ -64,6 +67,7 @@ class TransactionServiceTest {
 		when(accountService.getAccountById(1L)).thenReturn(account);
 		when(balanceService.getBalanceByAccountIdAndCurrency(1L, "USD")).thenReturn(balance);
 		when(balanceService.calculateNewBalance(balance.getAvailableAmount(), createTransactionRequest)).thenReturn(BigDecimal.valueOf(110));
+		when(transactionRunner.execute(any())).thenCallRealMethod();
 		
 		Transaction result = transactionService.createTransaction(createTransactionRequest);
 		

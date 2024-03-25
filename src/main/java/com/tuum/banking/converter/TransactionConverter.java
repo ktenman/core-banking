@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class TransactionConverter {
-	public static Transaction toEntity(CreateTransactionRequest createTransactionRequest) {
+	public static Transaction toDomain(CreateTransactionRequest createTransactionRequest) {
 		Transaction transaction = new Transaction();
 		transaction.setCurrency(createTransactionRequest.getCurrency());
 		transaction.setAccountId(createTransactionRequest.getAccountId());

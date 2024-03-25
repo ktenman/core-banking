@@ -13,7 +13,6 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -30,8 +29,8 @@ public class TransactionService {
 	private final RabbitMQPublisher rabbitMQPublisher;
 	private final AccountService accountService;
 	private final BalanceService balanceService;
+	private final TransactionRunner transactionRunner;
 	
-	@Transactional
 	@Lock(key = "#request.accountId")
 	@Caching(evict = {
 			@CacheEvict(value = ACCOUNTS_CACHE, key = "#request.accountId"),
@@ -43,15 +42,17 @@ public class TransactionService {
 		
 		BigDecimal newBalanceAmount = balanceService.calculateNewBalance(balance.getAvailableAmount(), request);
 		
-		Transaction transaction = TransactionConverter.toEntity(request);
-		transaction.setAccountId(account.getId());
-		transaction.setBalanceId(balance.getId());
-		transaction.setBalanceAfterTransaction(newBalanceAmount);
-		transaction.setReference(UUID.randomUUID().toString());
-		
-		transactionMapper.insert(transaction);
-		balance.setAvailableAmount(newBalanceAmount);
-		balanceService.updateBalance(balance, newBalanceAmount);
+		Transaction transaction = transactionRunner.execute(() -> {
+			Transaction newTransaction = TransactionConverter.toDomain(request);
+			newTransaction.setAccountId(account.getId());
+			newTransaction.setBalanceId(balance.getId());
+			newTransaction.setBalanceAfterTransaction(newBalanceAmount);
+			newTransaction.setReference(UUID.randomUUID().toString());
+			transactionMapper.insert(newTransaction);
+			balance.setAvailableAmount(newBalanceAmount);
+			balanceService.updateBalance(balance, newBalanceAmount);
+			return newTransaction;
+		});
 		
 		rabbitMQPublisher.publishTransactionCreated(transaction);
 		return transaction;
