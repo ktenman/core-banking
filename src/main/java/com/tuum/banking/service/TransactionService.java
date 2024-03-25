@@ -42,12 +42,13 @@ public class TransactionService {
 		
 		BigDecimal newBalanceAmount = balanceService.calculateNewBalance(balance.getAvailableAmount(), request);
 		
+		Transaction newTransaction = TransactionConverter.toDomain(request);
+		newTransaction.setAccountId(account.getId());
+		newTransaction.setBalanceId(balance.getId());
+		newTransaction.setBalanceAfterTransaction(newBalanceAmount);
+		newTransaction.setReference(UUID.randomUUID().toString());
+		
 		Transaction transaction = transactionRunner.execute(() -> {
-			Transaction newTransaction = TransactionConverter.toDomain(request);
-			newTransaction.setAccountId(account.getId());
-			newTransaction.setBalanceId(balance.getId());
-			newTransaction.setBalanceAfterTransaction(newBalanceAmount);
-			newTransaction.setReference(UUID.randomUUID().toString());
 			transactionMapper.insert(newTransaction);
 			balance.setAvailableAmount(newBalanceAmount);
 			balanceService.updateBalance(balance, newBalanceAmount);
