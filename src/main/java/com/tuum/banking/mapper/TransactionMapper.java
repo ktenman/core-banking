@@ -10,7 +10,7 @@ import org.apache.ibatis.annotations.Select;
 @Mapper
 public interface TransactionMapper extends BaseMapper<Transaction> {
 	
-	@Select("SELECT * FROM transaction WHERE account_id = #{accountId}")
+	@Select("SELECT * FROM transaction WHERE account_id = #{accountId} ORDER BY created_at DESC")
 	IPage<Transaction> selectByAccountId(Long accountId, Page<?> page);
 	
 }

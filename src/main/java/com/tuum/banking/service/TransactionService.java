@@ -36,7 +36,7 @@ public class TransactionService {
 	@Lock(key = "#request.idempotencyKey")
 	@Caching(evict = {
 			@CacheEvict(value = ACCOUNTS_CACHE, key = "#request.accountId"),
-			@CacheEvict(value = TRANSACTIONS_CACHE, key = "#request.accountId")
+			@CacheEvict(value = TRANSACTIONS_CACHE, allEntries = true, condition = "#request.accountId != null")
 	})
 	public Transaction createTransaction(CreateTransactionRequest request) {
 		Account account = accountService.getAccountById(request.getAccountId());
