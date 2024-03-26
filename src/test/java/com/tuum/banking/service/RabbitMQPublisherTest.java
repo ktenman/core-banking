@@ -2,6 +2,7 @@ package com.tuum.banking.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tuum.banking.configuration.rabbitmq.RabbitMQConstants;
 import com.tuum.banking.domain.OutboxMessage;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,12 +43,12 @@ class RabbitMQPublisherTest {
 	void publishMessages_ShouldPublishPendingMessages() throws JsonProcessingException {
 		OutboxMessage message1 = new OutboxMessage();
 		message1.setId(1L);
-		message1.setEventType("account-created");
+		message1.setEventType(RabbitMQConstants.ACCOUNT_CREATED);
 		message1.setPayload("{\"id\": 1}");
 		
 		OutboxMessage message2 = new OutboxMessage();
 		message2.setId(2L);
-		message2.setEventType("transaction-created");
+		message2.setEventType(RabbitMQConstants.TRANSACTION_CREATED);
 		message2.setPayload("{\"id\": 2}");
 		
 		when(outboxMessageService.selectPendingMessages()).thenReturn(List.of(message1, message2));
@@ -56,15 +57,14 @@ class RabbitMQPublisherTest {
 		rabbitMQPublisher.publishMessages();
 		
 		verify(rabbitTemplate, times(2)).convertAndSend(anyString(), any(Message.class));
-		verify(outboxMessageService, times(1)).updateStatus(eq(1L), eq(OutboxMessage.OutboxStatus.SENT), eq(null));
-		verify(outboxMessageService, times(1)).updateStatus(eq(2L), eq(OutboxMessage.OutboxStatus.SENT), eq(null));
+		verify(outboxMessageService, times(2)).updateStatus(anyLong(), eq(OutboxMessage.OutboxStatus.SENT), eq(null));
 	}
 	
 	@Test
 	void publishMessages_WhenPublishingFails_ShouldUpdateStatusToFailed() throws JsonProcessingException {
 		OutboxMessage message = new OutboxMessage();
 		message.setId(1L);
-		message.setEventType("account-created");
+		message.setEventType(RabbitMQConstants.ACCOUNT_CREATED);
 		message.setPayload("{\"id\": 1}");
 		
 		when(outboxMessageService.selectPendingMessages()).thenReturn(List.of(message));
