@@ -1,10 +1,10 @@
-// src/main/java/com/tuum/banking/service/OutboxMessageService.java
 package com.tuum.banking.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tuum.banking.domain.Aggregate;
 import com.tuum.banking.domain.OutboxMessage;
+import com.tuum.banking.domain.OutboxMessage.OutboxStatus;
 import com.tuum.banking.mapper.OutboxMessageMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -24,7 +24,7 @@ public class OutboxMessageService {
 				.aggregateId(aggregate.getId())
 				.eventType(aggregate.getEventType())
 				.payload(convertToJson(aggregate))
-				.status(OutboxMessage.OutboxStatus.PENDING)
+				.status(OutboxStatus.PENDING)
 				.build();
 		
 		outboxMessageMapper.insert(outboxMessage);
@@ -39,7 +39,7 @@ public class OutboxMessageService {
 		return outboxMessageMapper.selectPendingMessages();
 	}
 	
-	public void updateStatus(Long id, OutboxMessage.OutboxStatus status, String errorMessage) {
+	public void updateStatus(Long id, OutboxStatus status, String errorMessage) {
 		outboxMessageMapper.updateStatus(id, status, errorMessage);
 	}
 	
