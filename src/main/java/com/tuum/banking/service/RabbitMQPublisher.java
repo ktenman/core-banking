@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tuum.banking.configuration.exception.JsonConversionException;
 import com.tuum.banking.domain.OutboxMessage;
+import com.tuum.banking.domain.OutboxMessage.OutboxStatus;
+import com.tuum.banking.service.lock.Lock;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Message;
@@ -32,15 +34,16 @@ public class RabbitMQPublisher {
 	private final OutboxMessageService outboxMessageService;
 	
 	@Scheduled(fixedDelay = 1000)
+	@Lock(key = "'publishMessages'")
 	public void publishMessages() {
 		List<OutboxMessage> messages = outboxMessageService.selectPendingMessages();
 		for (OutboxMessage message : messages) {
 			try {
 				publish(message.getEventType(), message.getPayload());
-				outboxMessageService.updateStatus(message.getId(), OutboxMessage.OutboxStatus.SENT, null);
+				outboxMessageService.updateStatus(message.getId(), OutboxStatus.SENT, null);
 			} catch (Exception e) {
 				log.error("Failed to publish message with ID: {}", message.getId(), e);
-				outboxMessageService.updateStatus(message.getId(), OutboxMessage.OutboxStatus.FAILED, e.getMessage());
+				outboxMessageService.updateStatus(message.getId(), OutboxStatus.FAILED, e.getMessage());
 			}
 		}
 	}

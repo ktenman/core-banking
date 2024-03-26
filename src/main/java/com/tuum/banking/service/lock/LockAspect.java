@@ -32,12 +32,12 @@ public class LockAspect {
 		String lockKey = getKey(lock.key(), joinPoint);
 		long timeoutMillis = lock.timeoutMillis();
 		lockService.acquireLock(lockKey, timeoutMillis);
-		log.info("Lock acquired for key {} with lock key {}", lock.key(), lockKey);
+		log.debug("Lock acquired for key {} with lock key {}", lock.key(), lockKey);
 		try {
 			return joinPoint.proceed();
 		} finally {
 			lockService.releaseLock(lockKey);
-			log.info("Lock released for key {} with lock key {}", lock.key(), lockKey);
+			log.debug("Lock released for key {} with lock key {}", lock.key(), lockKey);
 		}
 	}
 	
