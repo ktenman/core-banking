@@ -80,6 +80,49 @@ table and their relationships:
 - An **account** can have multiple **transactions**, establishing a one-to-many relationship.
 - Each **transaction** is associated with a specific **balance**, representing a many-to-one relationship.
 
+# Transactional Outbox Messaging Pattern
+
+The core-banking system uses the transactional outbox messaging pattern to ensure reliable and consistent message
+publishing to RabbitMQ. The pattern involves storing the messages to be published in a dedicated `outbox_message` table
+within the same transaction as the business logic. This guarantees that the messages are persisted in the database even
+if the message publishing fails or the application crashes.
+
+## How it works
+
+1. When an account is created or a transaction is performed, the corresponding `Account` or `Transaction` entity is
+   saved to the database
+2. Within the same transaction, an `OutboxMessage` entity is created with the following properties:
+    - `aggregateType`: The type of the aggregate (e.g., "Account" or "Transaction").
+    - `aggregateId`: The ID of the created account or transaction.
+    - `eventType`: The event type (e.g., "account-created" or "transaction-created").
+    - `payload`: The JSON representation of the created account or transaction.
+    - `status`: The initial status of the outbox message, set to PENDING.
+3. The `OutboxMessage` is inserted into the `outbox_message` table within the same transaction as the business logic.
+4. A scheduled job (`OutboxMessagePublisher`) runs periodically to process the pending outbox messages. It reads the
+   messages from the `outbox_message` table and publishes them to the corresponding RabbitMQ queues based on
+   the `eventType`.
+5. If the message publishing succeeds, the status of the outbox message is updated to SENT. If the publishing fails, the
+   status is updated to FAILED, and the error message is stored in the `error_message` column.
+
+## Database Schema
+
+The `outbox_message` table has the following schema:
+
+```sql
+CREATE TABLE outbox_message
+(
+    id             BIGSERIAL PRIMARY KEY,
+    aggregate_type VARCHAR(255) NOT NULL,
+    aggregate_id   BIGINT       NOT NULL,
+    event_type     VARCHAR(255) NOT NULL,
+    payload        JSONB        NOT NULL,
+    status         VARCHAR(20)  NOT NULL DEFAULT 'PENDING',
+    error_message  TEXT,
+    created_at     TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at     TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+```
+
 ## API Documentation
 
 The application provides comprehensive API documentation using OpenAPI 3.0. You can access this documentation at:
@@ -181,6 +224,8 @@ docker-compose -f docker-compose.yml up -d
 - **Account Management:** Create and retrieve accounts with associated balances.
 - **Transaction Processing:** Perform deposit and withdrawal transactions on accounts.
 - **Distributed Locking:** Implements Redis-based distributed locking for concurrency control.
+- **Transactional Outbox Pattern**: Implementation of the transactional outbox messaging pattern to guarantee message
+  persistence and delivery, even in the face of failures or crashes.
 
 ## Performance Estimates
 
