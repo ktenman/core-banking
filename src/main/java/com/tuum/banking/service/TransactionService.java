@@ -20,6 +20,7 @@ import java.util.UUID;
 
 import static com.tuum.banking.configuration.RedisConfiguration.ACCOUNTS_CACHE;
 import static com.tuum.banking.configuration.RedisConfiguration.TRANSACTIONS_CACHE;
+import static com.tuum.banking.configuration.rabbitmq.EventType.TRANSACTION_CREATED;
 
 @Service
 @RequiredArgsConstructor
@@ -50,7 +51,7 @@ public class TransactionService {
 		
 		return transactionRunner.execute(() -> {
 			transactionMapper.insert(newTransaction);
-			outboxMessageService.createOutboxMessage(newTransaction);
+			outboxMessageService.createOutboxMessage(newTransaction, TRANSACTION_CREATED);
 			balance.setAvailableAmount(newBalanceAmount);
 			balanceService.updateBalance(balance, newBalanceAmount);
 			return newTransaction;

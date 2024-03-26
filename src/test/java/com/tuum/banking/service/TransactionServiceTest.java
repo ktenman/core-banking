@@ -1,5 +1,6 @@
 package com.tuum.banking.service;
 
+import com.tuum.banking.configuration.rabbitmq.EventType;
 import com.tuum.banking.domain.Account;
 import com.tuum.banking.domain.Balance;
 import com.tuum.banking.domain.Transaction;
@@ -76,7 +77,7 @@ class TransactionServiceTest {
 		assertThat(result.getDirection()).isEqualTo(direction);
 		verify(transactionMapper, times(1)).insert(any(Transaction.class));
 		verify(balanceService, times(1)).updateBalance(balance, BigDecimal.valueOf(110));
-		verify(outboxMessageService, times(1)).createOutboxMessage(any(Transaction.class));
+		verify(outboxMessageService, times(1)).createOutboxMessage(any(Transaction.class), any(EventType.class));
 	}
 	
 }

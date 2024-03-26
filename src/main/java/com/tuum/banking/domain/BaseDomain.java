@@ -12,7 +12,7 @@ import java.time.Instant;
 
 @Getter
 @Setter
-public abstract class BaseEntity implements Serializable {
+public abstract class BaseDomain implements Serializable {
 	@TableId(type = IdType.AUTO)
 	private Long id;
 	

@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 
 @Getter
 @Setter
-public class Balance extends BaseEntity {
+public class Balance extends BaseDomain {
 	private Long accountId;
 	private String currency;
 	private BigDecimal availableAmount;

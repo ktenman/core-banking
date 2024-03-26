@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 import static com.tuum.banking.configuration.RedisConfiguration.ACCOUNTS_CACHE;
+import static com.tuum.banking.configuration.rabbitmq.EventType.ACCOUNT_CREATED;
 
 @Service
 @RequiredArgsConstructor
@@ -32,7 +33,7 @@ public class AccountService {
 		
 		List<Balance> balances = transactionRunner.execute(() -> {
 			accountMapper.insert(account);
-			outboxMessageService.createOutboxMessage(account);
+			outboxMessageService.createOutboxMessage(account, ACCOUNT_CREATED);
 			return balanceService.createBalances(account.getId(), createAccountRequest.getBalances());
 		});
 		

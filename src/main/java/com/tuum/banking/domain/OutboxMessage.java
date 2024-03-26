@@ -13,7 +13,7 @@ import lombok.Setter;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class OutboxMessage extends BaseEntity {
+public class OutboxMessage extends BaseDomain {
 	
 	private String aggregateType;
 	private Long aggregateId;
