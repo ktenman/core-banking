@@ -39,8 +39,7 @@ public class TransactionController {
 			@RequestParam(defaultValue = "1") long pageNumber,
 			@RequestParam(defaultValue = "10") long pageSize
 	) {
-		Page<Transaction> page = new Page<>(pageNumber, pageSize);
-		IPage<Transaction> transactionsPage = transactionService.getTransactions(accountId, page);
+		IPage<Transaction> transactionsPage = transactionService.getTransactions(accountId, Page.of(pageNumber, pageSize));
 		return transactionsPage.convert(TransactionConverter::toDto);
 	}
 	
