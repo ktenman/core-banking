@@ -1,5 +1,6 @@
 package com.tuum.banking.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tuum.banking.IntegrationTest;
 import com.tuum.banking.configuration.exception.GlobalExceptionHandler.ApiError;
@@ -241,19 +242,21 @@ class TransactionControllerIntegrationTest {
 			ResultActions resultActions = mockMvc.perform(get(TRANSACTION_API_ENDPOINT + "/{accountId}", account.getId()))
 					.andExpect(status().isOk());
 			
-			List<TransactionDto> response = objectMapper.readValue(resultActions.andReturn().getResponse().getContentAsString(),
+			String responseJson = resultActions.andReturn().getResponse().getContentAsString();
+			JsonNode responseNode = objectMapper.readTree(responseJson);
+			List<TransactionDto> transactions = objectMapper.convertValue(responseNode.get("records"),
 					objectMapper.getTypeFactory().constructCollectionType(List.class, TransactionDto.class));
 			
-			assertThat(response).hasSize(2);
-			assertThat(response).extracting(TransactionDto::getAccountId).containsOnly(account.getId());
-			assertThat(response).extracting(TransactionDto::getAmount)
+			assertThat(transactions).hasSize(2);
+			assertThat(transactions).extracting(TransactionDto::getAccountId).containsOnly(account.getId());
+			assertThat(transactions).extracting(TransactionDto::getAmount)
 					.satisfiesExactlyInAnyOrder(
 							amount -> assertThat(amount).isEqualByComparingTo(BigDecimal.valueOf(100)),
 							amount -> assertThat(amount).isEqualByComparingTo(BigDecimal.valueOf(200))
 					);
-			assertThat(response).extracting(TransactionDto::getCurrency).containsOnly("EUR");
-			assertThat(response).extracting(TransactionDto::getDirection).containsExactlyInAnyOrder(OUT, IN);
-			assertThat(response).extracting(TransactionDto::getDescription)
+			assertThat(transactions).extracting(TransactionDto::getCurrency).containsOnly("EUR");
+			assertThat(transactions).extracting(TransactionDto::getDirection).containsExactlyInAnyOrder(OUT, IN);
+			assertThat(transactions).extracting(TransactionDto::getDescription)
 					.containsExactlyInAnyOrder("Test transaction 1", "Test transaction 2");
 		}
 		

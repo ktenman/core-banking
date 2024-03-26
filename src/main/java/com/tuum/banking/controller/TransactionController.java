@@ -1,5 +1,7 @@
 package com.tuum.banking.controller;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.tuum.banking.configuration.logging.Loggable;
 import com.tuum.banking.converter.TransactionConverter;
 import com.tuum.banking.domain.Transaction;
@@ -14,9 +16,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/transactions")
@@ -33,11 +34,14 @@ public class TransactionController {
 	
 	@Loggable
 	@GetMapping("/{accountId}")
-	public List<TransactionDto> getTransactions(@Parameter(example = "1") @PathVariable Long accountId) {
-		List<Transaction> transactions = transactionService.getTransactions(accountId);
-		return transactions.stream()
-				.map(TransactionConverter::toDto)
-				.toList();
+	public IPage<TransactionDto> getTransactions(
+			@Parameter(example = "1") @PathVariable Long accountId,
+			@RequestParam(defaultValue = "1") long pageNumber,
+			@RequestParam(defaultValue = "10") long pageSize
+	) {
+		Page<Transaction> page = new Page<>(pageNumber, pageSize);
+		IPage<Transaction> transactionsPage = transactionService.getTransactions(accountId, page);
+		return transactionsPage.convert(TransactionConverter::toDto);
 	}
 	
 }

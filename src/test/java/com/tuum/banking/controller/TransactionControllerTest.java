@@ -1,5 +1,7 @@
 package com.tuum.banking.controller;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.tuum.banking.domain.Transaction;
 import com.tuum.banking.dto.TransactionDto;
 import com.tuum.banking.service.TransactionService;
@@ -15,6 +17,8 @@ import java.util.List;
 import static com.tuum.banking.domain.Transaction.TransactionDirection.IN;
 import static com.tuum.banking.domain.Transaction.TransactionDirection.OUT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -42,12 +46,16 @@ class TransactionControllerTest {
 				.direction(OUT)
 				.currency("EUR")
 				.build();
-		List<Transaction> transactions = List.of(transaction1, transaction2);
-		when(transactionService.getTransactions(1L)).thenReturn(transactions);
+		Page<Transaction> page = new Page<>(1, 10);
+		page.setRecords(List.of(transaction1, transaction2));
+		page.setTotal(2);
 		
-		List<TransactionDto> result = transactionController.getTransactions(1L);
+		when(transactionService.getTransactions(eq(1L), any(Page.class))).thenReturn(page);
 		
-		assertThat(result).hasSize(2)
+		IPage<TransactionDto> result = transactionController.getTransactions(1L, page.getCurrent(), page.getSize());
+		
+		assertThat(result.getRecords())
+				.hasSize(2)
 				.satisfiesExactlyInAnyOrder(
 						transactionDto -> {
 							assertThat(transactionDto.getAmount()).isEqualTo(BigDecimal.TEN);
@@ -60,8 +68,5 @@ class TransactionControllerTest {
 							assertThat(transactionDto.getCurrency()).isEqualTo("EUR");
 						}
 				);
-		
 	}
-	
-	
 }

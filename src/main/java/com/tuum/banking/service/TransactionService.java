@@ -1,5 +1,7 @@
 package com.tuum.banking.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.tuum.banking.converter.TransactionConverter;
 import com.tuum.banking.domain.Account;
 import com.tuum.banking.domain.Balance;
@@ -15,7 +17,6 @@ import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.UUID;
 
 import static com.tuum.banking.configuration.RedisConfiguration.ACCOUNTS_CACHE;
@@ -34,8 +35,8 @@ public class TransactionService {
 	
 	@Lock(key = "#request.idempotencyKey")
 	@Caching(evict = {
-			@CacheEvict(value = ACCOUNTS_CACHE, key = "#request.idempotencyKey"),
-			@CacheEvict(value = TRANSACTIONS_CACHE, key = "#request.idempotencyKey")
+			@CacheEvict(value = ACCOUNTS_CACHE, key = "#request.accountId"),
+			@CacheEvict(value = TRANSACTIONS_CACHE, key = "#request.accountId")
 	})
 	public Transaction createTransaction(CreateTransactionRequest request) {
 		Account account = accountService.getAccountById(request.getAccountId());
@@ -58,9 +59,9 @@ public class TransactionService {
 		});
 	}
 	
-	@Cacheable(value = TRANSACTIONS_CACHE, key = "#accountId")
-	public List<Transaction> getTransactions(Long accountId) {
+	@Cacheable(value = TRANSACTIONS_CACHE, key = "{ #accountId, #page.current, #page.size }")
+	public IPage<Transaction> getTransactions(Long accountId, Page<Transaction> page) {
 		Account account = accountService.getAccountById(accountId);
-		return transactionMapper.selectByAccountId(account.getId());
+		return transactionMapper.selectByAccountId(account.getId(), page);
 	}
 }
