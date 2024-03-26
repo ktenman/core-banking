@@ -1,5 +1,6 @@
 package com.tuum.banking.domain;
 
+import com.tuum.banking.configuration.rabbitmq.RabbitMQConstants;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -13,7 +14,7 @@ import java.math.BigDecimal;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class Transaction extends BaseEntity {
+public class Transaction extends BaseEntity implements Aggregate {
 	private Long accountId;
 	private Long balanceId;
 	private BigDecimal amount;
@@ -22,6 +23,11 @@ public class Transaction extends BaseEntity {
 	private BigDecimal balanceAfterTransaction;
 	private String currency;
 	private String reference;
+	
+	@Override
+	public String getEventType() {
+		return RabbitMQConstants.TRANSACTION_CREATED;
+	}
 	
 	public enum TransactionDirection {
 		IN, OUT

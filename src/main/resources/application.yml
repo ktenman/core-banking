@@ -48,8 +48,6 @@ logging:
   level:
     root: INFO
     org.springframework: INFO
-    org.hibernate: INFO
-    org.apache.ibatis: DEBUG
   pattern:
     console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{20} %X{transactionId}- %msg%n'
     file: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{20} %X{transactionId}- %msg%n'
@@ -75,4 +73,4 @@ mybatis-plus:
   type-aliases-package: com.tuum.banking.domain
   configuration:
     map-underscore-to-camel-case: true
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+#    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl

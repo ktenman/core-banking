@@ -6,29 +6,26 @@ import com.tuum.banking.configuration.exception.GlobalExceptionHandler.ApiError;
 import com.tuum.banking.configuration.rabbitmq.RabbitMQConstants;
 import com.tuum.banking.domain.Account;
 import com.tuum.banking.domain.Balance;
+import com.tuum.banking.domain.OutboxMessage;
 import com.tuum.banking.dto.AccountDto;
 import com.tuum.banking.dto.AccountDto.BalanceResponseDto;
 import com.tuum.banking.dto.CreateAccountRequest;
 import com.tuum.banking.dto.CreateAccountRequest.BalanceRequestDto;
 import com.tuum.banking.mapper.AccountMapper;
 import com.tuum.banking.mapper.BalanceMapper;
-import lombok.SneakyThrows;
+import com.tuum.banking.mapper.OutboxMessageMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.springframework.amqp.core.Message;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -51,7 +48,7 @@ class AccountControllerIntegrationTest {
 	@Autowired
 	ObjectMapper objectMapper;
 	@Autowired
-	RabbitTemplate rabbitTemplate;
+	OutboxMessageMapper outboxMessageMapper;
 	@Autowired
 	AccountMapper accountMapper;
 	@Autowired
@@ -98,31 +95,14 @@ class AccountControllerIntegrationTest {
 		};
 	}
 	
-	@SneakyThrows(IOException.class)
-	private void assertRabbitMQMessagePublished(AccountDto response) {
-		Message message = rabbitTemplate.receive(RabbitMQConstants.ACCOUNT_CREATED);
-		assertThat(message).isNotNull();
-		assertThat(message.getMessageProperties()).isNotNull();
-		Map<String, Object> headers = message.getMessageProperties().getHeaders();
-		assertThat(headers).hasSize(3).containsEntry("originator", ORIGINATOR).containsKey("createdAt").containsKey("uuid");
-		assertThat(headers.get("createdAt")).isNotNull();
-		assertThat(headers.get("uuid")).isNotNull();
-		Account receivedAccount = objectMapper.readValue(message.getBody(), Account.class);
-		assertThat(receivedAccount).isNotNull()
-				.satisfies(account -> {
-					assertThat(account.getId()).isEqualTo(response.getAccountId());
-					assertThat(account.getCustomerId()).isEqualTo(response.getCustomerId());
-					assertThat(account.getReference()).isEqualTo(response.getReference());
-				});
-	}
-	
 	@Nested
 	@DisplayName("POST /api/accounts")
 	class CreateAccount {
 		
 		private static Stream<List<BalanceRequestDto>> provideBalanceRequestData() {
 			return Stream.of(
-					List.of(new BalanceRequestDto(USD.name(), BigDecimal.valueOf(100)), new BalanceRequestDto(EUR.name(), BigDecimal.valueOf(200))),
+					List.of(new BalanceRequestDto(USD.name(), BigDecimal.valueOf(100)),
+							new BalanceRequestDto(EUR.name(), BigDecimal.valueOf(200))),
 					List.of(new BalanceRequestDto(EUR.name(), BigDecimal.valueOf(300)))
 			);
 		}
@@ -136,14 +116,24 @@ class AccountControllerIntegrationTest {
 					.country("USA")
 					.balances(balanceRequests)
 					.build();
-			
 			ResultActions resultActions = mockMvc.perform(post(ACCOUNT_API_ENDPOINT)
 					.contentType(APPLICATION_JSON)
 					.content(objectMapper.writeValueAsString(accountRequestDto))).andExpect(status().isOk());
 			
+			
 			AccountDto response = objectMapper.readValue(resultActions.andReturn().getResponse().getContentAsString(), AccountDto.class);
 			assertAccountCreatedWithBalances(response, balanceRequests);
-			assertRabbitMQMessagePublished(response);
+			assertOutboxMessageCreated();
+		}
+		
+		private void assertOutboxMessageCreated() {
+			List<OutboxMessage> outboxMessages = outboxMessageMapper.selectPendingMessages();
+			assertThat(outboxMessages).hasSize(1).first().satisfies(outboxMessage -> {
+				assertThat(outboxMessage.getAggregateType()).isEqualTo(Account.class.getSimpleName());
+				assertThat(outboxMessage.getAggregateId()).isEqualTo(1L);
+				assertThat(outboxMessage.getEventType()).isEqualTo(RabbitMQConstants.ACCOUNT_CREATED);
+				assertThat(outboxMessage.getPayload()).isNotEmpty();
+			});
 		}
 		
 		@Test

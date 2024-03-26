@@ -10,7 +10,7 @@ import java.time.Instant;
 
 @Configuration
 @MapperScan(value = "com.tuum.banking.mapper", sqlSessionTemplateRef = "sqlSessionTemplate")
-public class MyBatisConfig {
+public class MyBatisConfiguration {
 	
 	@Bean
 	public MetaObjectHandler metaObjectHandler() {
@@ -18,7 +18,6 @@ public class MyBatisConfig {
 	}
 	
 	public static class TimestampMetaObjectHandler implements MetaObjectHandler {
-		
 		@Override
 		public void insertFill(MetaObject metaObject) {
 			Instant now = Instant.now();
@@ -31,5 +30,4 @@ public class MyBatisConfig {
 			this.setFieldValByName("updatedAt", Instant.now(), metaObject);
 		}
 	}
-	
 }

@@ -20,8 +20,8 @@ import static com.tuum.banking.configuration.RedisConfiguration.ACCOUNTS_CACHE;
 public class AccountService {
 	private final AccountMapper accountMapper;
 	private final BalanceService balanceService;
-	private final RabbitMQPublisher rabbitMQPublisher;
 	private final TransactionRunner transactionRunner;
+	private final OutboxMessageService outboxMessageService;
 	
 	@Lock(key = "#createAccountRequest.reference")
 	public Account createAccount(CreateAccountRequest createAccountRequest) {
@@ -32,11 +32,12 @@ public class AccountService {
 		
 		List<Balance> balances = transactionRunner.execute(() -> {
 			accountMapper.insert(account);
+			outboxMessageService.createOutboxMessage(account);
 			return balanceService.createBalances(account.getId(), createAccountRequest.getBalances());
 		});
 		
 		account.setBalances(balances);
-		rabbitMQPublisher.publishAccountCreated(account);
+		
 		return account;
 	}
 	

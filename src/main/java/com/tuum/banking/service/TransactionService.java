@@ -26,10 +26,10 @@ import static com.tuum.banking.configuration.RedisConfiguration.TRANSACTIONS_CAC
 @Slf4j
 public class TransactionService {
 	private final TransactionMapper transactionMapper;
-	private final RabbitMQPublisher rabbitMQPublisher;
 	private final AccountService accountService;
 	private final BalanceService balanceService;
 	private final TransactionRunner transactionRunner;
+	private final OutboxMessageService outboxMessageService;
 	
 	@Lock(key = "#request.accountId")
 	@Caching(evict = {
@@ -48,15 +48,13 @@ public class TransactionService {
 		newTransaction.setBalanceAfterTransaction(newBalanceAmount);
 		newTransaction.setReference(UUID.randomUUID().toString());
 		
-		Transaction transaction = transactionRunner.execute(() -> {
+		return transactionRunner.execute(() -> {
 			transactionMapper.insert(newTransaction);
+			outboxMessageService.createOutboxMessage(newTransaction);
 			balance.setAvailableAmount(newBalanceAmount);
 			balanceService.updateBalance(balance, newBalanceAmount);
 			return newTransaction;
 		});
-		
-		rabbitMQPublisher.publishTransactionCreated(transaction);
-		return transaction;
 	}
 	
 	@Cacheable(value = TRANSACTIONS_CACHE, key = "#accountId")

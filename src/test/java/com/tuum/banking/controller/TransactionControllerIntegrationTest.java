@@ -6,28 +6,25 @@ import com.tuum.banking.configuration.exception.GlobalExceptionHandler.ApiError;
 import com.tuum.banking.configuration.rabbitmq.RabbitMQConstants;
 import com.tuum.banking.domain.Account;
 import com.tuum.banking.domain.Balance;
+import com.tuum.banking.domain.OutboxMessage;
 import com.tuum.banking.domain.Transaction;
 import com.tuum.banking.dto.CreateTransactionRequest;
 import com.tuum.banking.dto.TransactionDto;
 import com.tuum.banking.mapper.AccountMapper;
 import com.tuum.banking.mapper.BalanceMapper;
+import com.tuum.banking.mapper.OutboxMessageMapper;
 import com.tuum.banking.mapper.TransactionMapper;
 import com.tuum.banking.util.TestFileUtil;
-import lombok.SneakyThrows;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.springframework.amqp.core.Message;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static com.tuum.banking.domain.Transaction.TransactionDirection.IN;
@@ -54,7 +51,7 @@ class TransactionControllerIntegrationTest {
 	@Autowired
 	TransactionMapper transactionMapper;
 	@Autowired
-	RabbitTemplate rabbitTemplate;
+	OutboxMessageMapper outboxMessageMapper;
 	
 	CreateTransactionRequest createTransactionRequest = CreateTransactionRequest.builder()
 			.accountId(999L)
@@ -101,32 +98,7 @@ class TransactionControllerIntegrationTest {
 			assertThat(response.getDirection()).isEqualTo(OUT);
 			assertThat(response.getDescription()).isEqualTo("Test transaction");
 			assertThat(response.getBalanceAfterTransaction()).isEqualByComparingTo(BigDecimal.valueOf(900));
-			assertRabbitMQMessagePublished(response);
-		}
-		
-		@SneakyThrows(IOException.class)
-		private void assertRabbitMQMessagePublished(TransactionDto response) {
-			Message message = rabbitTemplate.receive(RabbitMQConstants.TRANSACTION_CREATED);
-			assertThat(message).isNotNull();
-			assertThat(message.getMessageProperties()).isNotNull();
-			Map<String, Object> headers = message.getMessageProperties().getHeaders();
-			assertThat(headers).hasSize(3).containsEntry("originator", ORIGINATOR).containsKey("createdAt").containsKey("uuid");
-			assertThat(headers.get("createdAt")).isNotNull();
-			assertThat(headers.get("uuid")).isNotNull();
-			Transaction transaction = objectMapper.readValue(message.getBody(), Transaction.class);
-			assertThat(transaction).isNotNull()
-					.satisfies(t -> {
-						assertThat(t.getAccountId()).isEqualTo(response.getAccountId());
-						assertThat(t.getAmount()).isEqualByComparingTo(response.getAmount());
-						assertThat(t.getCurrency()).isEqualTo(response.getCurrency());
-						assertThat(t.getDirection()).isEqualTo(response.getDirection());
-						assertThat(t.getDescription()).isEqualTo(response.getDescription());
-						assertThat(t.getBalanceAfterTransaction()).isEqualByComparingTo(response.getBalanceAfterTransaction());
-						assertThat(t.getReference()).isNotEmpty();
-						assertThat(t.getId()).isNotNull();
-						assertThat(t.getCreatedAt()).isNotNull();
-						assertThat(t.getUpdatedAt()).isNotNull();
-					});
+			assertOutboxMessageCreated();
 		}
 		
 		@Test
@@ -223,6 +195,16 @@ class TransactionControllerIntegrationTest {
 					.containsEntry("currency", "Currency is required")
 					.containsEntry("description", "Description is required")
 					.containsEntry("direction", "Direction is required");
+		}
+		
+		private void assertOutboxMessageCreated() {
+			List<OutboxMessage> outboxMessages = outboxMessageMapper.selectPendingMessages();
+			assertThat(outboxMessages).hasSize(1).first().satisfies(outboxMessage -> {
+				assertThat(outboxMessage.getAggregateType()).isEqualTo(Transaction.class.getSimpleName());
+				assertThat(outboxMessage.getAggregateId()).isEqualTo(1L);
+				assertThat(outboxMessage.getEventType()).isEqualTo(RabbitMQConstants.TRANSACTION_CREATED);
+				assertThat(outboxMessage.getPayload()).isNotEmpty();
+			});
 		}
 	}
 	

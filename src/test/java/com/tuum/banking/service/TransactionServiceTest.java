@@ -32,7 +32,7 @@ class TransactionServiceTest {
 	private TransactionRunner transactionRunner;
 	
 	@Mock
-	private RabbitMQPublisher rabbitMQPublisher;
+	private OutboxMessageService outboxMessageService;
 	
 	@Mock
 	private AccountService accountService;
@@ -76,7 +76,7 @@ class TransactionServiceTest {
 		assertThat(result.getDirection()).isEqualTo(direction);
 		verify(transactionMapper, times(1)).insert(any(Transaction.class));
 		verify(balanceService, times(1)).updateBalance(balance, BigDecimal.valueOf(110));
-		verify(rabbitMQPublisher, times(1)).publishTransactionCreated(any(Transaction.class));
+		verify(outboxMessageService, times(1)).createOutboxMessage(any(Transaction.class));
 	}
 	
 }
