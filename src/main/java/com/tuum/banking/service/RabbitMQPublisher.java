@@ -34,7 +34,7 @@ public class RabbitMQPublisher {
 	private final OutboxMessageService outboxMessageService;
 	
 	@Scheduled(fixedDelay = 1000)
-	@Lock(key = "'publishMessages'")
+	@Lock(key = "'publishMessages'", retry = false)
 	public void publishMessages() {
 		List<OutboxMessage> messages = outboxMessageService.selectPendingMessages();
 		for (OutboxMessage message : messages) {

@@ -36,7 +36,7 @@ public class LockService {
 		throw new IllegalStateException("Unable to acquire lock for identifier: " + identifier);
 	}
 	
-	private boolean tryAcquireLock(String identifier, long timeoutMillis) {
+	public boolean tryAcquireLock(String identifier, long timeoutMillis) {
 		String lockKey = LOCK_PREFIX + identifier;
 		return Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(lockKey, "locked", timeoutMillis, TimeUnit.MILLISECONDS));
 	}

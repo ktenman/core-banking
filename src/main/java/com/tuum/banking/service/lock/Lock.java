@@ -76,4 +76,15 @@ public @interface Lock {
 	 * @return the timeout value in milliseconds
 	 */
 	long timeoutMillis() default 60000;
+	
+	/**
+	 * Determines whether lock acquisition should be retried if it fails.
+	 * <p>
+	 * If set to 'true' (default), the method will attempt to acquire the lock multiple times
+	 * before giving up. If set to 'false', the method will immediately throw an exception if
+	 * the lock cannot be acquired.
+	 *
+	 * @return true if lock acquisition should be retried, false otherwise
+	 */
+	boolean retry() default true;
 }

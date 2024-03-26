@@ -90,6 +90,11 @@ class LockAspectTest {
 			}
 			
 			@Override
+			public boolean retry() {
+				return true;
+			}
+			
+			@Override
 			public Class<? extends Annotation> annotationType() {
 				return Lock.class;
 			}

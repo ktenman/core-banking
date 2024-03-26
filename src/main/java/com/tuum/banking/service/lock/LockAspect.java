@@ -31,7 +31,14 @@ public class LockAspect {
 		}
 		String lockKey = getKey(lock.key(), joinPoint);
 		long timeoutMillis = lock.timeoutMillis();
-		lockService.acquireLock(lockKey, timeoutMillis);
+		if (lock.retry()) {
+			lockService.acquireLock(lockKey, timeoutMillis);
+		} else {
+			boolean lockAcquired = lockService.tryAcquireLock(lockKey, timeoutMillis);
+			if (!lockAcquired) {
+				throw new IllegalStateException("Unable to acquire lock for identifier: " + lockKey);
+			}
+		}
 		log.debug("Lock acquired for key {} with lock key {}", lock.key(), lockKey);
 		try {
 			return joinPoint.proceed();
