@@ -43,7 +43,7 @@ public class RabbitMQPublisher {
 		
 		Page<OutboxMessage> page;
 		do {
-			page = new Page<>(current, size);
+			page = Page.of(current, size);
 			IPage<OutboxMessage> messagePage = outboxMessageService.selectPendingMessages(page);
 			List<OutboxMessage> messages = messagePage.getRecords();
 			for (OutboxMessage message : messages) {
