@@ -39,7 +39,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class TransactionControllerIntegrationTest {
 	
 	private static final String TRANSACTION_API_ENDPOINT = "/api/transactions";
-	private static final String ORIGINATOR = "core-banking";
+	private static final String IDEMPOTENCY_KEY = "123e4567-e89b-12d3-a456-426614174000";
 	@Autowired
 	MockMvc mockMvc;
 	@Autowired
@@ -59,6 +59,7 @@ class TransactionControllerIntegrationTest {
 			.currency("EUR")
 			.direction(OUT)
 			.description("Test transaction")
+			.idempotencyKey(IDEMPOTENCY_KEY)
 			.build();
 	
 	private Account createAccountWithBalance(BigDecimal availableAmount) {
@@ -189,12 +190,13 @@ class TransactionControllerIntegrationTest {
 			assertThat(apiError.getMessage()).isEqualTo("Validation error");
 			assertThat(apiError.getDebugMessage()).isEqualTo("One or more fields have an error");
 			assertThat(apiError.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
-			assertThat(apiError.getValidationErrors()).hasSize(5)
+			assertThat(apiError.getValidationErrors()).hasSize(6)
 					.containsEntry("accountId", "Account ID is required")
 					.containsEntry("amount", "Amount is required")
 					.containsEntry("currency", "Currency is required")
 					.containsEntry("description", "Description is required")
-					.containsEntry("direction", "Direction is required");
+					.containsEntry("direction", "Direction is required")
+					.containsEntry("idempotencyKey", "Idempotency key is required");
 		}
 		
 		private void assertOutboxMessageCreated() {

@@ -8,11 +8,13 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import static java.sql.Types.OTHER;
+
 public class JsonStringTypeHandler extends BaseTypeHandler<String> {
 	
 	@Override
 	public void setNonNullParameter(PreparedStatement ps, int i, String parameter, JdbcType jdbcType) throws SQLException {
-		ps.setObject(i, parameter, java.sql.Types.OTHER);
+		ps.setObject(i, parameter, OTHER);
 	}
 	
 	@Override

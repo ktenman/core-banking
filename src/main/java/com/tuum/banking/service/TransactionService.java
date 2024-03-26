@@ -31,10 +31,10 @@ public class TransactionService {
 	private final TransactionRunner transactionRunner;
 	private final OutboxMessageService outboxMessageService;
 	
-	@Lock(key = "#request.accountId")
+	@Lock(key = "#request.idempotencyKey")
 	@Caching(evict = {
-			@CacheEvict(value = ACCOUNTS_CACHE, key = "#request.accountId"),
-			@CacheEvict(value = TRANSACTIONS_CACHE, key = "#request.accountId")
+			@CacheEvict(value = ACCOUNTS_CACHE, key = "#request.idempotencyKey"),
+			@CacheEvict(value = TRANSACTIONS_CACHE, key = "#request.idempotencyKey")
 	})
 	public Transaction createTransaction(CreateTransactionRequest request) {
 		Account account = accountService.getAccountById(request.getAccountId());

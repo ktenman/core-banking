@@ -44,6 +44,10 @@ public class CreateTransactionRequest {
 	@Schema(description = "Description of the transaction", example = "Salary")
 	private String description;
 	
+	@NotEmpty(message = "Idempotency key is required")
+	@Schema(description = "Idempotency key of the transaction", example = "123e4567-e89b-12d3-a456-426614174000")
+	private String idempotencyKey;
+	
 	public void setCurrency(String currency) {
 		validateCurrency(currency);
 		this.currency = currency;
