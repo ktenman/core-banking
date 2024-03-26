@@ -1,5 +1,6 @@
 package com.tuum.banking.controller;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tuum.banking.IntegrationTest;
 import com.tuum.banking.configuration.exception.GlobalExceptionHandler.ApiError;
@@ -127,7 +128,7 @@ class AccountControllerIntegrationTest {
 		}
 		
 		private void assertOutboxMessageCreated() {
-			List<OutboxMessage> outboxMessages = outboxMessageMapper.selectPendingMessages();
+			List<OutboxMessage> outboxMessages = outboxMessageMapper.selectPendingMessages(Page.of(1, 10)).getRecords();
 			assertThat(outboxMessages).hasSize(1).first().satisfies(outboxMessage -> {
 				assertThat(outboxMessage.getAggregateType()).isEqualTo(Account.class.getSimpleName());
 				assertThat(outboxMessage.getAggregateId()).isEqualTo(1L);

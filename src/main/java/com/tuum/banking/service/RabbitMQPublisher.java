@@ -1,5 +1,7 @@
 package com.tuum.banking.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tuum.banking.configuration.exception.JsonConversionException;
@@ -36,16 +38,25 @@ public class RabbitMQPublisher {
 	@Scheduled(fixedDelay = 1000)
 	@Lock(key = "'publishMessages'", retry = false)
 	public void publishMessages() {
-		List<OutboxMessage> messages = outboxMessageService.selectPendingMessages();
-		for (OutboxMessage message : messages) {
-			try {
-				publish(message.getEventType(), message.getPayload());
-				outboxMessageService.updateStatus(message.getId(), OutboxStatus.SENT, null);
-			} catch (Exception e) {
-				log.error("Failed to publish message with ID: {}", message.getId(), e);
-				outboxMessageService.updateStatus(message.getId(), OutboxStatus.FAILED, e.getMessage());
+		long current = 1;
+		long size = 100;
+		
+		Page<OutboxMessage> page;
+		do {
+			page = new Page<>(current, size);
+			IPage<OutboxMessage> messagePage = outboxMessageService.selectPendingMessages(page);
+			List<OutboxMessage> messages = messagePage.getRecords();
+			for (OutboxMessage message : messages) {
+				try {
+					publish(message.getEventType(), message.getPayload());
+					outboxMessageService.updateStatus(message.getId(), OutboxStatus.SENT, null);
+				} catch (Exception e) {
+					log.error("Failed to publish message with ID: {}", message.getId(), e);
+					outboxMessageService.updateStatus(message.getId(), OutboxStatus.FAILED, e.getMessage());
+				}
 			}
-		}
+			current = messagePage.getCurrent() + 1;
+		} while (page.hasNext());
 	}
 	
 	private void publish(String queue, Object object) {

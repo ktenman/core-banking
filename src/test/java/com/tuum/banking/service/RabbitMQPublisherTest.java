@@ -1,5 +1,6 @@
 package com.tuum.banking.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tuum.banking.configuration.rabbitmq.RabbitMQConstants;
@@ -51,7 +52,10 @@ class RabbitMQPublisherTest {
 		message2.setEventType(RabbitMQConstants.TRANSACTION_CREATED);
 		message2.setPayload("{\"id\": 2}");
 		
-		when(outboxMessageService.selectPendingMessages()).thenReturn(List.of(message1, message2));
+		Page<OutboxMessage> page = new Page<>();
+		page.setRecords(List.of(message1, message2));
+		
+		when(outboxMessageService.selectPendingMessages(any(Page.class))).thenReturn(page);
 		when(objectMapper.writeValueAsString(any())).thenReturn("{\"id\": 1}").thenReturn("{\"id\": 2}");
 		
 		rabbitMQPublisher.publishMessages();
@@ -67,7 +71,10 @@ class RabbitMQPublisherTest {
 		message.setEventType(RabbitMQConstants.ACCOUNT_CREATED);
 		message.setPayload("{\"id\": 1}");
 		
-		when(outboxMessageService.selectPendingMessages()).thenReturn(List.of(message));
+		Page<OutboxMessage> page = new Page<>();
+		page.setRecords(List.of(message));
+		
+		when(outboxMessageService.selectPendingMessages(any(Page.class))).thenReturn(page);
 		when(objectMapper.writeValueAsString(any())).thenReturn("{\"id\": 1}");
 		doThrow(new RuntimeException("Publishing failed")).when(rabbitTemplate).convertAndSend(anyString(), any(Message.class));
 		
@@ -83,7 +90,10 @@ class RabbitMQPublisherTest {
 		message.setEventType("account-created");
 		message.setPayload(null);
 		
-		when(outboxMessageService.selectPendingMessages()).thenReturn(List.of(message));
+		Page<OutboxMessage> page = new Page<>();
+		page.setRecords(List.of(message));
+		
+		when(outboxMessageService.selectPendingMessages(any(Page.class))).thenReturn(page);
 		when(objectMapper.writeValueAsString(any())).thenReturn(null);
 		
 		rabbitMQPublisher.publishMessages();
