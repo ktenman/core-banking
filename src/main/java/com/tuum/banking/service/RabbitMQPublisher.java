@@ -37,13 +37,11 @@ public class RabbitMQPublisher {
 	@Scheduled(fixedDelay = 1000)
 	@Lock(key = "'publishMessages'", retry = false)
 	public void publishMessages() {
-		long current = 1;
 		long size = 100;
-		
 		CustomPage<OutboxMessage> page;
 		List<OutboxMessage> messages;
 		do {
-			page = new CustomPage<>(current, size);
+			page = new CustomPage<>(size);
 			CustomPage<OutboxMessage> messagePage = outboxMessageService.selectPendingMessages(page);
 			messages = messagePage.getRecords();
 			for (OutboxMessage message : messages) {
@@ -55,7 +53,6 @@ public class RabbitMQPublisher {
 					outboxMessageService.updateStatus(message.getId(), OutboxStatus.FAILED, e.getMessage());
 				}
 			}
-			current = messagePage.getCurrent() + 1;
 		} while (!messages.isEmpty());
 	}
 	

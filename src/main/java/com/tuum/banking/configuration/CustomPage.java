@@ -8,12 +8,16 @@ import java.util.List;
 @Getter
 @Setter
 public class CustomPage<T> {
-	private long current;
+	private long current = 1;
 	private long size;
 	private List<T> records;
 	
 	public CustomPage(long current, long size) {
 		this.current = current;
+		this.size = size;
+	}
+	
+	public CustomPage(long size) {
 		this.size = size;
 	}
 	

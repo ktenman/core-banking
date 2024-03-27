@@ -14,7 +14,7 @@ import java.util.List;
 @Mapper
 public interface OutboxMessageMapper extends BaseMapper<OutboxMessage> {
 	
-	@Select("SELECT * FROM outbox_message WHERE status = 'PENDING' LIMIT #{page.size} OFFSET #{page.offset}")
+	@Select("SELECT * FROM outbox_message WHERE status = 'PENDING' LIMIT #{page.size}")
 	List<OutboxMessage> selectPendingMessages(@Param("page") CustomPage<?> page);
 	
 	@Update("UPDATE outbox_message SET status = #{status}, error_message = #{errorMessage}, updated_at = NOW() WHERE id = #{id}")
