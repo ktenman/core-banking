@@ -2,7 +2,6 @@ package com.tuum.banking.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tuum.banking.configuration.CustomPage;
 import com.tuum.banking.configuration.rabbitmq.RabbitMQConstants;
 import com.tuum.banking.domain.OutboxMessage;
 import org.junit.jupiter.api.Test;
@@ -16,6 +15,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.anyString;
@@ -52,14 +52,9 @@ class RabbitMQPublisherTest {
 		message2.setEventType(RabbitMQConstants.TRANSACTION_CREATED);
 		message2.setPayload("{\"id\": 2}");
 		
-		CustomPage<OutboxMessage> page = new CustomPage<>(1, 10);
-		page.setRecords(List.of(message1, message2));
-		CustomPage<OutboxMessage> page2 = new CustomPage<>(2, 10);
-		page2.setRecords(List.of());
-		
-		when(outboxMessageService.selectPendingMessages(any()))
-				.thenReturn(page)
-				.thenReturn(page2);
+		when(outboxMessageService.selectPendingMessages(anyInt()))
+				.thenReturn(List.of(message1, message2))
+				.thenReturn(List.of());
 		when(objectMapper.writeValueAsString(any())).thenReturn("{\"id\": 1}").thenReturn("{\"id\": 2}");
 		
 		rabbitMQPublisher.publishMessages();
@@ -75,14 +70,9 @@ class RabbitMQPublisherTest {
 		message.setEventType(RabbitMQConstants.ACCOUNT_CREATED);
 		message.setPayload("{\"id\": 1}");
 		
-		CustomPage<OutboxMessage> page1 = new CustomPage<>(1, 10);
-		page1.setRecords(List.of(message));
-		CustomPage<OutboxMessage> page2 = new CustomPage<>(2, 10);
-		page2.setRecords(List.of());
-		
-		when(outboxMessageService.selectPendingMessages(any()))
-				.thenReturn(page1)
-				.thenReturn(page2);
+		when(outboxMessageService.selectPendingMessages(anyInt()))
+				.thenReturn(List.of(message))
+				.thenReturn(List.of());
 		
 		when(objectMapper.writeValueAsString(any())).thenReturn("{\"id\": 1}");
 		doThrow(new RuntimeException("Publishing failed")).when(rabbitTemplate).convertAndSend(anyString(), any(Message.class));
@@ -99,14 +89,9 @@ class RabbitMQPublisherTest {
 		message.setEventType("account-created");
 		message.setPayload(null);
 		
-		CustomPage<OutboxMessage> page1 = new CustomPage<>(1, 10);
-		page1.setRecords(List.of(message));
-		CustomPage<OutboxMessage> page2 = new CustomPage<>(2, 10);
-		page2.setRecords(List.of());
-		
-		when(outboxMessageService.selectPendingMessages(any()))
-				.thenReturn(page1)
-				.thenReturn(page2);
+		when(outboxMessageService.selectPendingMessages(anyInt()))
+				.thenReturn(List.of(message))
+				.thenReturn(List.of());
 		when(objectMapper.writeValueAsString(any())).thenReturn(null);
 		
 		rabbitMQPublisher.publishMessages();

@@ -2,7 +2,6 @@ package com.tuum.banking.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tuum.banking.configuration.CustomPage;
 import com.tuum.banking.configuration.rabbitmq.EventType;
 import com.tuum.banking.domain.Aggregate;
 import com.tuum.banking.domain.OutboxMessage;
@@ -37,10 +36,8 @@ public class OutboxMessageService {
 		return objectMapper.writeValueAsString(object);
 	}
 	
-	public CustomPage<OutboxMessage> selectPendingMessages(CustomPage<OutboxMessage> page) {
-		List<OutboxMessage> records = outboxMessageMapper.selectPendingMessages(page);
-		page.setRecords(records);
-		return page;
+	public List<OutboxMessage> selectPendingMessages(int limit) {
+		return outboxMessageMapper.selectPendingMessages(limit);
 	}
 	
 	public void updateStatus(Long id, OutboxStatus status, String errorMessage) {

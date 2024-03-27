@@ -2,7 +2,6 @@ package com.tuum.banking.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tuum.banking.configuration.CustomPage;
 import com.tuum.banking.configuration.exception.JsonConversionException;
 import com.tuum.banking.domain.OutboxMessage;
 import com.tuum.banking.domain.OutboxMessage.OutboxStatus;
@@ -37,13 +36,10 @@ public class RabbitMQPublisher {
 	@Scheduled(fixedDelay = 1000)
 	@Lock(key = "'publishMessages'", retry = false)
 	public void publishMessages() {
-		long size = 100;
-		CustomPage<OutboxMessage> page;
+		int size = 100;
 		List<OutboxMessage> messages;
 		do {
-			page = new CustomPage<>(size);
-			CustomPage<OutboxMessage> messagePage = outboxMessageService.selectPendingMessages(page);
-			messages = messagePage.getRecords();
+			messages = outboxMessageService.selectPendingMessages(size);
 			for (OutboxMessage message : messages) {
 				try {
 					publish(message.getEventType(), message.getPayload());
