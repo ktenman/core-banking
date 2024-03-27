@@ -1,9 +1,8 @@
 package com.tuum.banking.service;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tuum.banking.configuration.CustomPage;
 import com.tuum.banking.configuration.rabbitmq.EventType;
 import com.tuum.banking.domain.Aggregate;
 import com.tuum.banking.domain.OutboxMessage;
@@ -12,6 +11,8 @@ import com.tuum.banking.mapper.OutboxMessageMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -36,8 +37,10 @@ public class OutboxMessageService {
 		return objectMapper.writeValueAsString(object);
 	}
 	
-	public IPage<OutboxMessage> selectPendingMessages(Page<OutboxMessage> page) {
-		return outboxMessageMapper.selectPendingMessages(page);
+	public CustomPage<OutboxMessage> selectPendingMessages(CustomPage<OutboxMessage> page) {
+		List<OutboxMessage> records = outboxMessageMapper.selectPendingMessages(page);
+		page.setRecords(records);
+		return page;
 	}
 	
 	public void updateStatus(Long id, OutboxStatus status, String errorMessage) {

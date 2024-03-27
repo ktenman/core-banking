@@ -1,3 +1,4 @@
+CREATE EXTENSION pg_stat_statements;
 CREATE TABLE account
 (
     id           BIGSERIAL PRIMARY KEY,

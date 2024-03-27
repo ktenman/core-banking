@@ -1,9 +1,8 @@
 package com.tuum.banking.service;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tuum.banking.configuration.CustomPage;
 import com.tuum.banking.configuration.exception.JsonConversionException;
 import com.tuum.banking.domain.OutboxMessage;
 import com.tuum.banking.domain.OutboxMessage.OutboxStatus;
@@ -41,11 +40,12 @@ public class RabbitMQPublisher {
 		long current = 1;
 		long size = 100;
 		
-		Page<OutboxMessage> page;
+		CustomPage<OutboxMessage> page;
+		List<OutboxMessage> messages;
 		do {
-			page = Page.of(current, size);
-			IPage<OutboxMessage> messagePage = outboxMessageService.selectPendingMessages(page);
-			List<OutboxMessage> messages = messagePage.getRecords();
+			page = new CustomPage<>(current, size);
+			CustomPage<OutboxMessage> messagePage = outboxMessageService.selectPendingMessages(page);
+			messages = messagePage.getRecords();
 			for (OutboxMessage message : messages) {
 				try {
 					publish(message.getEventType(), message.getPayload());
@@ -56,7 +56,7 @@ public class RabbitMQPublisher {
 				}
 			}
 			current = messagePage.getCurrent() + 1;
-		} while (page.hasNext());
+		} while (!messages.isEmpty());
 	}
 	
 	private void publish(String queue, Object object) {

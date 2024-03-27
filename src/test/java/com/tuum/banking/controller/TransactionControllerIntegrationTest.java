@@ -1,9 +1,9 @@
 package com.tuum.banking.controller;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tuum.banking.IntegrationTest;
+import com.tuum.banking.configuration.CustomPage;
 import com.tuum.banking.configuration.exception.GlobalExceptionHandler.ApiError;
 import com.tuum.banking.configuration.rabbitmq.RabbitMQConstants;
 import com.tuum.banking.domain.Account;
@@ -202,7 +202,7 @@ class TransactionControllerIntegrationTest {
 		}
 		
 		private void assertOutboxMessageCreated() {
-			List<OutboxMessage> outboxMessages = outboxMessageMapper.selectPendingMessages(Page.of(1, 10)).getRecords();
+			List<OutboxMessage> outboxMessages = outboxMessageMapper.selectPendingMessages(new CustomPage<>(1, 10));
 			assertThat(outboxMessages).hasSize(1).first().satisfies(outboxMessage -> {
 				assertThat(outboxMessage.getAggregateType()).isEqualTo(Transaction.class.getSimpleName());
 				assertThat(outboxMessage.getAggregateId()).isEqualTo(1L);

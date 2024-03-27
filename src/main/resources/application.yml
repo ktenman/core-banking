@@ -12,21 +12,13 @@ spring:
     password: postgres
     driver-class-name: org.postgresql.Driver
     hikari:
-      maximumPoolSize: 5
+      maximumPoolSize: 10
   jpa:
     hibernate:
       ddl-auto: none # Use 'update' for development
     show-sql: false
     database: POSTGRESQL
     database-platform: org.hibernate.dialect.PostgreSQLDialect
-    properties:
-      hibernate:
-        format_sql: false
-        temp.use_jdbc_metadata_defaults: false
-        id.new_generator_mappings: true
-        cache.use_second_level_cache: false
-        cache.use_query_cache: false
-        generate_statistics: false
 
   flyway:
     url: ${spring.datasource.url}
@@ -73,4 +65,4 @@ mybatis-plus:
   type-aliases-package: com.tuum.banking.domain
   configuration:
     map-underscore-to-camel-case: true
-#    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl

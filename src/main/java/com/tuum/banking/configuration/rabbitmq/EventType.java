@@ -4,8 +4,8 @@ import lombok.Getter;
 
 @Getter
 public enum EventType {
-	ACCOUNT_CREATED("account-created"),
-	TRANSACTION_CREATED("transaction-created");
+	ACCOUNT_CREATED(RabbitMQConstants.ACCOUNT_CREATED),
+	TRANSACTION_CREATED(RabbitMQConstants.TRANSACTION_CREATED);
 	
 	private final String value;
 	
