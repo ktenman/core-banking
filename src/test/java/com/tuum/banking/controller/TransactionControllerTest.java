@@ -50,7 +50,7 @@ class TransactionControllerTest {
 		page.setRecords(List.of(transaction1, transaction2));
 		page.setTotal(2);
 		
-		when(transactionService.getTransactions(eq(1L), any(Page.class))).thenReturn(page);
+		when(transactionService.getTransactions(eq(1L), any())).thenReturn(page);
 		
 		IPage<TransactionDto> result = transactionController.getTransactions(1L, page.getCurrent(), page.getSize());
 		

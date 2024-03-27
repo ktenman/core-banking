@@ -1,7 +1,7 @@
 package com.tuum.banking.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.tuum.banking.configuration.CustomPage;
 import com.tuum.banking.configuration.logging.Loggable;
 import com.tuum.banking.converter.TransactionConverter;
 import com.tuum.banking.domain.Transaction;
@@ -39,7 +39,8 @@ public class TransactionController {
 			@RequestParam(defaultValue = "1") long pageNumber,
 			@RequestParam(defaultValue = "10") long pageSize
 	) {
-		IPage<Transaction> transactionsPage = transactionService.getTransactions(accountId, Page.of(pageNumber, pageSize));
+		CustomPage<Transaction> page = new CustomPage<>(pageNumber, pageSize);
+		IPage<Transaction> transactionsPage = transactionService.getTransactions(accountId, page);
 		return transactionsPage.convert(TransactionConverter::toDto);
 	}
 	

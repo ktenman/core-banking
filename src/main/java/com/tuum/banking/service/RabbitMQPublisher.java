@@ -33,7 +33,7 @@ public class RabbitMQPublisher {
 	private String originator;
 	private final OutboxMessageService outboxMessageService;
 	
-	@Scheduled(fixedDelay = 1000)
+	@Scheduled(fixedDelay = 100000)
 	@Lock(key = "'publishMessages'", retry = false)
 	public void publishMessages() {
 		int size = 100;

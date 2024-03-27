@@ -1,7 +1,7 @@
 package com.tuum.banking.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.tuum.banking.configuration.CustomPage;
 import com.tuum.banking.converter.TransactionConverter;
 import com.tuum.banking.domain.Account;
 import com.tuum.banking.domain.Balance;
@@ -12,7 +12,6 @@ import com.tuum.banking.service.lock.Lock;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
@@ -59,8 +58,8 @@ public class TransactionService {
 		});
 	}
 	
-	@Cacheable(value = TRANSACTIONS_CACHE, key = "{ #accountId, #page.current, #page.size }")
-	public IPage<Transaction> getTransactions(Long accountId, Page<Transaction> page) {
+	//	@Cacheable(value = TRANSACTIONS_CACHE, key = "{ #accountId, #page.current, #page.size }")
+	public IPage<Transaction> getTransactions(Long accountId, CustomPage<Transaction> page) {
 		Account account = accountService.getAccountById(accountId);
 		return transactionMapper.selectByAccountId(account.getId(), page);
 	}
