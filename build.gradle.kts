@@ -10,7 +10,7 @@ group = "com.tuum"
 version = "0.0.1-SNAPSHOT"
 
 val mybatisVersion = "3.0.3"
-val mybatisPlusVersion = "3.5.5"
+val mybatisPlusVersion = "3.5.6"
 val springdocOpenApiVersion = "2.5.0"
 
 java {
