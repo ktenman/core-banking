@@ -11,7 +11,7 @@ version = "0.0.1-SNAPSHOT"
 
 val mybatisVersion = "3.0.3"
 val mybatisPlusVersion = "3.5.7"
-val springdocOpenApiVersion = "2.5.0"
+val springdocOpenApiVersion = "2.6.0"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_21
