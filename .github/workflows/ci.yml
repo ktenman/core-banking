@@ -18,7 +18,7 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
       - name: Run Gradle test
-        uses: eskatos/gradle-command-action@v3.4.2
+        uses: eskatos/gradle-command-action@v3.5.0
         with:
           arguments: test --info
       - name: Upload coverage reports to Codecov
